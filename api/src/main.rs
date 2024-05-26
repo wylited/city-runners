@@ -1,23 +1,18 @@
+mod logging;
+mod websocket;
+
 use axum::{
-    extract::ws::{Message, WebSocket, WebSocketUpgrade},
-    response::IntoResponse,
+    extract::ws::{Message, WebSocket},
     routing::get,
     Router,
 };
-use axum_extra::TypedHeader;
 
 use std::borrow::Cow;
+use std::net::SocketAddr;
 use std::ops::ControlFlow;
-use std::{net::SocketAddr, path::PathBuf};
-use tower_http::{
-    services::ServeDir,
-    trace::{DefaultMakeSpan, TraceLayer},
-};
-
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tower_http::trace::{DefaultMakeSpan, TraceLayer};
 
 //allows to extract the IP of connecting user
-use axum::extract::connect_info::ConnectInfo;
 use axum::extract::ws::CloseFrame;
 
 //allows to split the websocket stream into separate TX and RX branches
@@ -25,39 +20,29 @@ use futures::{sink::SinkExt, stream::StreamExt};
 
 #[tokio::main]
 async fn main() {
-    let init = tracing_subscriber::registry()
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    let _guard = logging::init();
 
-    let app = Router::new().route("/ws", get(ws_handler)).layer(
-        TraceLayer::new_for_http().make_span_with(DefaultMakeSpan::default().include_headers(true)),
-    );
+    // address to host on
+    // TODO! make config customizable
+    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
-        .await
-        .unwrap();
-    tracing::debug!("listening on {}", listener.local_addr().unwrap());
-    axum::serve(
-        listener,
-        app.into_make_service_with_connect_info::<SocketAddr>(),
-    )
-    .await
-    .unwrap();
-}
+    let app = Router::new()
+        .route(
+            "/",
+            get(|| async { format!("City Runners, version {}", env!("CARGO_PKG_VERSION")) }),
+        ) // initial check for the frontend.
+        .route("/ws", get(websocket::handler))
+        .layer(
+            // a layer on the router so that it can trace all requests and responses for debugging.
+            TraceLayer::new_for_http()
+                .make_span_with(DefaultMakeSpan::default().include_headers(true)),
+        );
 
-async fn ws_handler(
-    ws: WebSocketUpgrade,
-    user_agent: Option<TypedHeader<headers::UserAgent>>,
-    ConnectInfo(address): ConnectInfo<SocketAddr>,
-) -> impl IntoResponse {
-    let user_agent = if let Some(TypedHeader(user_agent)) = user_agent {
-        user_agent.to_string()
-    } else {
-        String::from("Unknown browser")
-    };
-    println!("`{user_agent}` at {address} connected.");
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 
-    ws.on_upgrade(move |socket| handle_socket(socket, address))
+    tracing::info!("listening on {}", listener.local_addr().unwrap());
+
+    axum::serve(listener, app).await.unwrap(); // serve the api
 }
 
 /// Actual websocket statemachine (one will be spawned per connection)
