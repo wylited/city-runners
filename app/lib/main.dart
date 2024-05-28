@@ -1,4 +1,7 @@
+import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'dart:convert';
 
 void main() {
   runApp(const MyApp());
@@ -57,25 +60,44 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
+  Future<void> _sendLocationToServer() async {
+    // Get the device's current location
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+
+    // Create a JSON payload with the location data
+    Map<String, dynamic> locationData = {
+      'latitude': position.latitude,
+      'longitude': position.longitude,
+    };
+
+    // Send the location data to the API server
+    final Uri url = Uri.parse('http://192.168.0.24:3000/location');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(locationData),
+    );
+
+    // Check the response status code
+    if (response.statusCode == 200) {
+      print('Location sent successfully!');
+    } else {
+      print('Error sending location: ${response.statusCode}');
+    }
+  }
+
   void _incrementCounter() {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
       _counter++;
     });
+    _sendLocationToServer(); // Call the new function to send the location
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
         // TRY THIS: Try changing the color here to a specific color (to
@@ -119,7 +141,7 @@ class _MyHomePageState extends State<MyHomePage> {
         onPressed: _incrementCounter,
         tooltip: 'Increment',
         child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      ),
     );
   }
 }
