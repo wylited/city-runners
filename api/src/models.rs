@@ -1,3 +1,9 @@
+pub enum PlayerType {
+    Hider,
+    SecondarySeeker,
+    PrimarySeeker,
+    Admin,
+}
 pub struct Player {
     username: String,
     password: String,
@@ -12,7 +18,6 @@ pub enum TeamType {
 pub struct Team {
     team_type: TeamType,
     players: Vec<Player>,
-    location_transmitter: Player,
 }
 
 pub enum GameState {
