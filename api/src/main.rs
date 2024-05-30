@@ -1,5 +1,8 @@
 pub mod location;
 pub mod logging;
+pub mod config;
+pub mod models;
+pub mod game;
 
 use axum::{
     routing::{get, post},
@@ -9,9 +12,12 @@ use axum::{
 use std::net::SocketAddr;
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
 
+use crate::game::Game;
+
 #[tokio::main]
 async fn main() {
     let _guard = logging::init();
+    let game = Game::new();
 
     // address to host on
     // TODO! make config customizable

@@ -8,6 +8,10 @@ axum = { version = "0.7.5", features = ["ws"] }
 axum-extra = { version = "0.9.3", features = ["typed-header"] }
 chrono = { version = "0.4.38", features = ["serde"] }
 cookie = "0.18.1"
+diesel = "2.1.6"
+edgedb-derive = "0.5.2"
+edgedb-protocol = "0.6.1"
+edgedb-tokio = "0.5.1"
 futures = "0.3.30"
 futures-util = { version = "0.3.30", features = ["sink", "std"] }
 headers = "0.4.0"

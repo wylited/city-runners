@@ -4,10 +4,11 @@ pub enum PlayerType {
     PrimarySeeker,
     Admin,
 }
+
 pub struct Player {
+    pid: String,
     username: String,
-    password: String,
-    jwt_token: String,
+    password_hash: String,
 }
 
 pub enum TeamType {
@@ -17,18 +18,5 @@ pub enum TeamType {
 
 pub struct Team {
     team_type: TeamType,
-    players: Vec<Player>,
-}
-
-pub enum GameState {
-    Lobby,
-    Hiding,
-    Seeking,
-    GameEnd,
-}
-
-pub struct Game {
-    teams: Vec<Team>,
-    game_password: String,
-    current_state: GameState,
+    player_ids: Vec<String>,
 }

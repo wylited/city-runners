@@ -1,0 +1,5 @@
+{
+  "game_password": "default_game_password",
+  "database_url": "postgres://username:password@localhost/mygame",
+  "address": "0.0.0.0:3000"
+}
