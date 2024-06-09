@@ -4,6 +4,7 @@ mod game;
 mod location;
 mod logging;
 mod models;
+pub mod socket;
 
 use axum::{
     extract::Extension,
@@ -12,6 +13,7 @@ use axum::{
 };
 
 use std::{net::SocketAddr, sync::Arc};
+use tokio::sync::RwLock;
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
 
 use crate::game::Game;
@@ -36,7 +38,8 @@ async fn main() {
         ) // initial check for the frontend.
         .route("/location", post(location::recieve))
         .route("/auth", post(auth::authenticate))
-        .layer(Extension(Arc::new(game)))
+        .route("/ws/:username/:token", get(socket::handler))
+        .layer(Extension(Arc::new(RwLock::new(game))))
         .layer(
             // a layer on the router so that it can trace all requests and responses for debugging.
             TraceLayer::new_for_http()
