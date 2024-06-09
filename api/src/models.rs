@@ -1,3 +1,5 @@
+use edgedb_tokio::Queryable;
+
 pub enum PlayerType {
     Hider,
     SecondarySeeker,
@@ -5,10 +7,10 @@ pub enum PlayerType {
     Admin,
 }
 
+#[derive(Queryable, Debug)]
 pub struct Player {
-    pid: String,
-    username: String,
-    password_hash: String,
+    pub username: String,
+    pub password: String,
 }
 
 pub enum TeamType {

@@ -1,4 +1,5 @@
 use crate::config::Config;
+use edgedb_tokio::Client;
 
 pub enum GameState {
     Setup,     // Only admin is allowed to join.
@@ -9,15 +10,17 @@ pub enum GameState {
 }
 
 pub struct Game {
-    state: GameState,
-    config: Config,
+    pub state: GameState,
+    pub config: Config,
+    pub db: Client,
 }
 
 impl Game {
-    pub fn new() -> Self {
+    pub async fn new() -> Self {
         Game {
             state: GameState::Setup,
             config: Config::init(),
+            db: edgedb_tokio::create_client().await.unwrap(),
         }
     }
 }
