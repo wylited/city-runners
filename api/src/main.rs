@@ -7,9 +7,7 @@ mod models;
 pub mod socket;
 
 use axum::{
-    extract::Extension,
-    routing::{get, post},
-    Router,
+    extract::Extension, http::StatusCode, middleware, response::IntoResponse, routing::{get, post}, Router
 };
 
 use std::{net::SocketAddr, sync::Arc};
@@ -20,7 +18,7 @@ use crate::game::Game;
 
 #[tokio::main]
 async fn main() {
-    let _guard = logging::init();
+    logging::init();
     let game = Game::new().await; // do later
 
     // address to host on
@@ -37,8 +35,9 @@ async fn main() {
             get(|| async { format!("City Runners, version {} \n", env!("CARGO_PKG_VERSION")) }),
         ) // initial check for the frontend.
         .route("/location", post(location::recieve))
-        .route("/auth", post(auth::authenticate))
-        .route("/ws/:username/:token", get(socket::handler))
+        .route("/login", post(auth::login))
+        .route("/test_auth", get(secure_endpoint).layer(middleware::from_fn(auth::middleware)))
+        .route("/ws", get(socket::handler).layer(middleware::from_fn(auth::middleware)))
         .layer(Extension(Arc::new(RwLock::new(game))))
         .layer(
             // a layer on the router so that it can trace all requests and responses for debugging.
@@ -51,4 +50,10 @@ async fn main() {
     tracing::info!("listening on {}", listener.local_addr().unwrap());
 
     axum::serve(listener, app).await.unwrap(); // serve the api
+}
+
+async fn secure_endpoint(
+    Extension(username): Extension<String>,
+) -> impl IntoResponse {
+    (StatusCode::OK, format!("Hello, {}!", username))
 }

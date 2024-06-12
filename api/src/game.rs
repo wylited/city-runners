@@ -63,7 +63,10 @@ impl Game {
         let players: HashMap<String, Player> = res
             .into_iter()
             .map(|db_player| {
-                let player = Player::new(db_player.username.clone(), auth::generate_jwt(&db_player.username));
+                let player = Player::new(
+                    db_player.username.clone(),
+                    auth::jwt(&db_player.username),
+                );
                 (db_player.username, player)
             })
             .collect();

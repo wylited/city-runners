@@ -2,10 +2,8 @@ use std::sync::Arc;
 
 use axum::{
     extract::{
-        ws::{Message, WebSocket},
-        Path, WebSocketUpgrade,
+        ws::{Message, WebSocket}, WebSocketUpgrade,
     },
-    http::StatusCode,
     response::{IntoResponse, Response},
     Extension,
 };
@@ -23,15 +21,9 @@ pub struct ErrorResponse {
 pub async fn handler(
     ws: WebSocketUpgrade,
     user_agent: Option<TypedHeader<headers::UserAgent>>,
-    Path((username, token)): Path<(String, String)>,
     Extension(game): Extension<Arc<RwLock<Game>>>,
+    Extension(username): Extension<String>,
 ) -> Response {
-    let valid_token = game.read().await.players[&username].token.clone();
-    tracing::info!("recieved {token} against {valid_token}");
-
-    if token != valid_token {
-        return (StatusCode::UNAUTHORIZED, "Unauthorized").into_response();
-    }
 
     if let Some(TypedHeader(ua)) = user_agent {
         tracing::info!("{0} connected from {ua}", username);

@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-axum = { version = "0.7.5", features = ["ws"] }
+axum = { version = "0.7.5", features = ["ws", "json"] }
 axum-extra = { version = "0.9.3", features = ["typed-header"] }
 bcrypt = "0.15.1"
 chrono = { version = "0.4.38", features = ["serde"] }

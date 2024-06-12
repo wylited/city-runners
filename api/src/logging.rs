@@ -16,7 +16,7 @@ pub fn init() {
     // Log file naming convention, cr-year-month-date_hour:minute:second.log
     log_file.push(format!(
         "cr-{}.log",
-        Local::now().format("%Y-%m-%d_%H:%M:%S").to_string()
+        Local::now().format("%Y-%m-%d_%H:%M:%S")
     ));
 
     // Create the file
