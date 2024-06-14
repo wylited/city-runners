@@ -1,6 +1,7 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 void main() {
@@ -10,54 +11,258 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'CityRunners',
+      themeMode: ThemeMode.system, // Use system theme mode
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+      ),
+      home: const ServerSelectionPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
+class ServerSelectionPage extends StatefulWidget {
+  const ServerSelectionPage();
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  _ServerSelectionPageState createState() => _ServerSelectionPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _ServerSelectionPageState extends State<ServerSelectionPage> {
+  final _formKey = GlobalKey<FormState>();
+  String _serverAddress = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadServerAddress();
+  }
+
+  Future<void> _loadServerAddress() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedAddress = prefs.getString('server_address');
+    if (storedAddress != null) {
+      setState(() {
+        _serverAddress = storedAddress;
+      });
+    }
+  }
+
+  Future<void> _saveServerAddress() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('server_address', _serverAddress);
+  }
+
+  Future<bool> _validateServerAddress() async {
+    final url = Uri.parse('$_serverAddress/');
+    print('server address $_serverAddress');
+    try {
+      final response = await http.get(url);
+      return response.statusCode == 200;
+    } catch (e) {
+      print('except $e');
+      return false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Server Selection'),
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextFormField(
+                initialValue: _serverAddress,
+                onChanged: (value) {
+                  setState(() {
+                    _serverAddress = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a server address';
+                  }
+                  if (!Uri.parse(value).isAbsolute) {
+                    return 'Invalid address format';
+                  }
+                  return null;
+                },
+                decoration: InputDecoration(
+                  labelText: 'Server Address',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 16.0),
+              ElevatedButton(
+                onPressed: () async {
+                  if (_formKey.currentState?.validate() ?? false) {
+                    if (await _validateServerAddress()) {
+                      await _saveServerAddress();
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (_) => MyHomePage()),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Invalid server address'),
+                        ),
+                      );
+                    }
+                  }
+                },
+                child: Text('Save and Continue'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class MyHomePage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('My App'),
+      ),
+      body: Center(
+        child: Text('Hello, World!'),
+      ),
+    );
+  }
+}
+
+class SignInPage extends StatefulWidget {
+  final String serverAddress;
+
+  const SignInPage({super.key, required this.serverAddress});
+
+  @override
+  State<SignInPage> createState() => _SignInPageState();
+}
+
+class _SignInPageState extends State<SignInPage> {
+  final _formKey = GlobalKey<FormState>();
+  String _username = '';
+  String _password = '';
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Sign In'),
+      ),
+      body: Form(
+        key: _formKey,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'Username',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a username';
+                  }
+                  return null;
+                },
+                onSaved: (value) => _username = value!,
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                  border: OutlineInputBorder(),
+                ),
+                obscureText: true,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a password';
+                  }
+                  return null;
+                },
+                onSaved: (value) => _password = value!,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () async {
+                  if (_formKey.currentState!.validate()) {
+                    _formKey.currentState!.save();
+                    try {
+                      final response = await http.post(
+                        Uri.parse(widget.serverAddress + '/auth'),
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: jsonEncode({
+                          'username': _username,
+                          'password': _password,
+                        }),
+                      );
+                      if (response.statusCode == 200) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => LocationSender(
+                                serverAddress: widget.serverAddress),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Invalid username or password'),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error connecting to server: $e'),
+                        ),
+                      );
+                    }
+                  }
+                },
+                child: const Text('Sign In'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class LocationSender extends StatefulWidget {
+  final String serverAddress;
+
+  const LocationSender({super.key, required this.serverAddress});
+
+  @override
+  State<LocationSender> createState() => _LocationSenderState();
+}
+
+class _LocationSenderState extends State<LocationSender> {
   int _counter = 0;
 
   Future<void> _sendLocationToServer() async {
@@ -72,7 +277,7 @@ class _MyHomePageState extends State<MyHomePage> {
     };
 
     // Send the location data to the API server
-    final Uri url = Uri.parse('http://192.168.0.24:3000/location');
+    final Uri url = Uri.parse(widget.serverAddress + '/location');
     final response = await http.post(
       url,
       headers: {
@@ -93,38 +298,17 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _counter++;
     });
-    _sendLocationToServer(); // Call the new function to send the location
+    _sendLocationToServer(); // Call the function to send the location
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('Location Sender'),
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const Text(
@@ -134,13 +318,12 @@ class _MyHomePageState extends State<MyHomePage> {
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
+            ElevatedButton(
+              onPressed: _incrementCounter,
+              child: const Text('Send Location'),
+            ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }
