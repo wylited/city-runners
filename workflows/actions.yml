@@ -1,0 +1,95 @@
+name: Build Flutter App
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.19.0
+
+      - name: Navigate to app directory
+        run: cd app
+
+      - name: Get Flutter packages
+        run: flutter pub get
+
+      - name: Run Flutter tests
+        run: flutter test
+
+      - name: Build APK
+        run: flutter build apk
+
+      - name: Build app bundle
+        run: flutter build appbundle
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-apk
+          path: app/build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload App Bundle
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-appbundle
+          path: app/build/app/outputs/bundle/release/app-release.aab
+
+  build-ios:
+    runs-on: macos-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Navigate to app directory
+        run: cd app
+
+      - name: Get Flutter packages
+        run: flutter pub get
+
+      - name: Run Flutter tests
+        run: flutter test
+
+      - name: Build iOS app
+        run: flutter build ios --release --no-codesign
+
+      - name: Create Payload directory and move runner.app
+        run: |
+          cd build/ios/Release-iphoneos
+          mkdir Payload
+          mv Runner.app Payload/
+
+      - name: Compress to Payload.zip
+        run: |
+          cd build/ios/Release-iphoneos
+          zip -r Payload.zip Payload
+
+      - name: Rename Payload.zip to app.ipa
+        run: |
+          cd build/ios/Release-iphoneos
+          mv Payload.zip app.ipa
+
+      - name: Upload iOS IPA
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-ipa
+          path: build/ios/Release-iphoneos/app.ipa
