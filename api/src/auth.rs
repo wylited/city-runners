@@ -125,7 +125,6 @@ pub async fn middleware(
     ) {
         let claims = token_data.claims;
         let username = &claims.sub;
-        tracing::info!(claims.exp, claims.sub);
         if authenticate(claims.exp, &claims.sub, token, game).await {
             let mut req = req;
             req.extensions_mut().insert(username.to_string());

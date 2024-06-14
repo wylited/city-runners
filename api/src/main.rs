@@ -7,8 +7,9 @@ mod models;
 pub mod socket;
 
 use axum::{
-    extract::Extension, http::StatusCode, middleware, response::IntoResponse, routing::{get, post}, Router
+    extract::Extension, http::StatusCode, middleware, response::IntoResponse, routing::{get, post}, Json, Router
 };
+use serde_json::json;
 
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::RwLock;
@@ -36,7 +37,7 @@ async fn main() {
         ) // initial check for the frontend.
         .route("/location", post(location::recieve))
         .route("/login", post(auth::login))
-        .route("/test_auth", get(secure_endpoint).layer(middleware::from_fn(auth::middleware)))
+        .route("/validate", get(validate_token).layer(middleware::from_fn(auth::middleware)))
         .route("/ws", get(socket::handler).layer(middleware::from_fn(auth::middleware)))
         .layer(Extension(Arc::new(RwLock::new(game))))
         .layer(
@@ -52,8 +53,8 @@ async fn main() {
     axum::serve(listener, app).await.unwrap(); // serve the api
 }
 
-async fn secure_endpoint(
+async fn validate_token(
     Extension(username): Extension<String>,
 ) -> impl IntoResponse {
-    (StatusCode::OK, format!("Hello, {}!", username))
+    (StatusCode::OK, Json(json!({"username": username})))
 }
