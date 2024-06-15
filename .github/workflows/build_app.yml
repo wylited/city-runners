@@ -1,12 +1,9 @@
-name: Build Flutter App
+name: Build cityrunners
 
 on:
   push:
     branches:
-      - main
-  pull_request:
-    branches:
-      - main
+      - '**'
 
 jobs:
   build-android:
@@ -21,16 +18,16 @@ jobs:
         with:
           flutter-version: stable
 
-      - name: Navigate to app directory
-        run: cd app
-
       - name: Get Flutter packages
+        working-directory: ./app
         run: flutter pub get
 
       - name: Build APK
+        working-directory: ./app
         run: flutter build apk
 
       - name: Build app bundle
+        working-directory: ./app
         run: flutter build appbundle
 
       - name: Upload APK
@@ -57,32 +54,35 @@ jobs:
         with:
           channel: stable
 
-      - name: Navigate to app directory
-        run: cd app
-
       - name: Get Flutter packages
+        working-directory: ./app
         run: flutter pub get
 
       - name: Build iOS app
+        working-directory: ./app
         run: flutter build ios --release --no-codesign
 
       - name: Create Payload directory and move runner.app
+        working-directory: ./app
         run: |
           cd build/ios/Release-iphoneos
           mkdir Payload
           mv Runner.app Payload/
 
       - name: Compress to Payload.zip
+        working-directory: ./app
         run: |
           cd build/ios/Release-iphoneos
           zip -r Payload.zip Payload
 
       - name: Rename Payload.zip to app.ipa
+        working-directory: ./app
         run: |
           cd build/ios/Release-iphoneos
           mv Payload.zip app.ipa
 
       - name: Upload iOS IPA
+        working-directory: ./app
         uses: actions/upload-artifact@v3
         with:
           name: ios-ipa

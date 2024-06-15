@@ -94,7 +94,7 @@ class _ServerSelectionPageState extends State<ServerSelectionPage> {
                 },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a server address';
+                    return 'Please enter a valid server address';
                   }
                   if (!Uri.parse(value).isAbsolute) {
                     return 'Invalid address format';
