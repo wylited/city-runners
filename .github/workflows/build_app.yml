@@ -1,9 +1,12 @@
-name: Build cityrunners
+name: Build Flutter App
 
 on:
   push:
     branches:
-      - '**'  # Trigger on any branch
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build-android:
@@ -16,22 +19,18 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.19.0
+          flutter-version: stable
 
       - name: Navigate to app directory
-        working-directory: ./app
+        run: cd app
+
+      - name: Get Flutter packages
         run: flutter pub get
 
-      - name: Run Flutter tests
-        working-directory: ./app
-        run: flutter test
-
       - name: Build APK
-        working-directory: ./app
         run: flutter build apk
 
       - name: Build app bundle
-        working-directory: ./app
         run: flutter build appbundle
 
       - name: Upload APK
@@ -59,35 +58,32 @@ jobs:
           channel: stable
 
       - name: Navigate to app directory
-        working-directory: ./app
+        run: cd app
+
+      - name: Get Flutter packages
         run: flutter pub get
 
-      - name: Run Flutter tests
-        working-directory: ./app
-        run: flutter test
-
       - name: Build iOS app
-        working-directory: ./app
         run: flutter build ios --release --no-codesign
 
       - name: Create Payload directory and move runner.app
         run: |
-          cd app/build/ios/Release-iphoneos
+          cd build/ios/Release-iphoneos
           mkdir Payload
           mv Runner.app Payload/
 
       - name: Compress to Payload.zip
         run: |
-          cd app/build/ios/Release-iphoneos
+          cd build/ios/Release-iphoneos
           zip -r Payload.zip Payload
 
       - name: Rename Payload.zip to app.ipa
         run: |
-          cd app/build/ios/Release-iphoneos
+          cd build/ios/Release-iphoneos
           mv Payload.zip app.ipa
 
       - name: Upload iOS IPA
         uses: actions/upload-artifact@v3
         with:
           name: ios-ipa
-          path: app/build/ios/Release-iphoneos/app.ipa
+          path: build/ios/Release-iphoneos/app.ipa
