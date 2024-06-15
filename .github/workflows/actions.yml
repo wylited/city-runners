@@ -82,8 +82,7 @@ jobs:
           mv Payload.zip app.ipa
 
       - name: Upload iOS IPA
-        working-directory: ./app
         uses: actions/upload-artifact@v3
         with:
           name: ios-ipa
-          path: build/ios/Release-iphoneos/app.ipa
+          path: app/build/ios/Release-iphoneos/app.ipa
