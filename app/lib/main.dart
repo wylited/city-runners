@@ -134,6 +134,111 @@ class _ServerSelectionPageState extends State<ServerSelectionPage> {
   }
 }
 
+class ServerSelectionPage extends StatefulWidget {
+  const ServerSelectionPage();
+  @override
+  _ServerSelectionPageState createState() => _ServerSelectionPageState();
+}
+
+class _ServerSelectionPageState extends State<ServerSelectionPage> {
+  final _formKey = GlobalKey<FormState>();
+  String _serverAddress = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadServerAddress();
+  }
+
+  Future<void> _loadServerAddress() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedAddress = prefs.getString('server_address');
+    if (storedAddress != null) {
+      setState(() {
+        _serverAddress = storedAddress;
+      });
+    }
+  }
+
+  Future<void> _saveServerAddress() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('server_address', _serverAddress);
+  }
+
+  Future<bool> _validateServerAddress() async {
+    final url = Uri.parse('$_serverAddress/');
+    print('server address $_serverAddress');
+    try {
+      final response = await http.get(url);
+      return response.statusCode == 200;
+    } catch (e) {
+      print('except $e');
+      return false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Server Selection'),
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextFormField(
+                initialValue: _serverAddress,
+                onChanged: (value) {
+                  setState(() {
+                    _serverAddress = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a valid server address';
+                  }
+                  if (!Uri.parse(value).isAbsolute) {
+                    return 'Invalid address format';
+                  }
+                  return null;
+                },
+                decoration: InputDecoration(
+                  labelText: 'Server Address',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 16.0),
+              ElevatedButton(
+                onPressed: () async {
+                  if (_formKey.currentState?.validate() ?? false) {
+                    if (await _validateServerAddress()) {
+                      await _saveServerAddress();
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (_) => MyHomePage()),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Invalid server address'),
+                        ),
+                      );
+                    }
+                  }
+                },
+                child: Text('Save and Continue'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -143,111 +248,6 @@ class MyHomePage extends StatelessWidget {
       ),
       body: Center(
         child: Text('Hello, World!'),
-      ),
-    );
-  }
-}
-
-class SignInPage extends StatefulWidget {
-  final String serverAddress;
-
-  const SignInPage({super.key, required this.serverAddress});
-
-  @override
-  State<SignInPage> createState() => _SignInPageState();
-}
-
-class _SignInPageState extends State<SignInPage> {
-  final _formKey = GlobalKey<FormState>();
-  String _username = '';
-  String _password = '';
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sign In'),
-      ),
-      body: Form(
-        key: _formKey,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Username',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a username';
-                  }
-                  return null;
-                },
-                onSaved: (value) => _username = value!,
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  border: OutlineInputBorder(),
-                ),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a password';
-                  }
-                  return null;
-                },
-                onSaved: (value) => _password = value!,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    _formKey.currentState!.save();
-                    try {
-                      final response = await http.post(
-                        Uri.parse(widget.serverAddress + '/auth'),
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        body: jsonEncode({
-                          'username': _username,
-                          'password': _password,
-                        }),
-                      );
-                      if (response.statusCode == 200) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => LocationSender(
-                                serverAddress: widget.serverAddress),
-                          ),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Invalid username or password'),
-                          ),
-                        );
-                      }
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Error connecting to server: $e'),
-                        ),
-                      );
-                    }
-                  }
-                },
-                child: const Text('Sign In'),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
