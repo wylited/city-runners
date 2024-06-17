@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{auth, config::Config};
-use edgedb_tokio::{Client, Queryable};
+use edgedb_tokio::{Builder, Client, Queryable};
 use serde::Serialize;
 
 #[derive(Debug)]
@@ -50,9 +50,16 @@ pub struct Game {
 }
 
 impl Game {
-    pub async fn new() -> Self {
-        let db = edgedb_tokio::create_client().await.unwrap();
+    pub async fn new(db_inst: &str, secret: &str ) -> Self {
+        let db = Client::new(
+            &Builder::new()
+                .secret_key(secret)
+                .instance(db_inst).expect("invalid secrets")
+                .build_env().await.unwrap()
+        );
 
+        db.ensure_connected().await.unwrap();
+        
         #[derive(Queryable, Serialize)]
         struct DbPlayer {
             username: String,
