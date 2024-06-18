@@ -1,146 +1,56 @@
-import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'globals.dart' as globals;
+import 'server.dart';
+import 'login.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeGlobals();
+  runApp(const App());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class App extends StatelessWidget {
+  const App({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'CityRunners',
-      themeMode: ThemeMode.system, // Use system theme mode
+      themeMode: ThemeMode.system,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const ServerSelectionPage(),
+      home: globals.initialized
+          ? const ServerSelectionPage()
+          : const LoadingScreen(),
     );
   }
 }
 
-class ServerSelectionPage extends StatefulWidget {
-  const ServerSelectionPage();
-  @override
-  _ServerSelectionPageState createState() => _ServerSelectionPageState();
-}
-
-class _ServerSelectionPageState extends State<ServerSelectionPage> {
-  final _formKey = GlobalKey<FormState>();
-  String? _serverAddress;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadServerAddress();
-  }
-
-  Future<void> _loadServerAddress() async {
-    final prefs = await SharedPreferences.getInstance();
-    final storedAddress =
-        prefs.getString('server_address') ?? 'https://server.com';
-    setState(() {
-      _serverAddress = storedAddress;
-      _isLoading = false;
-    });
-  }
-
-  Future<void> _saveServerAddress(String serverAddress) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('server_address', serverAddress);
-  }
-
-  Future<bool> _validateServerAddress(String serverAddress) async {
-    final url = Uri.parse('$serverAddress/');
-    try {
-      final response = await http.get(url);
-      return response.statusCode == 200;
-    } catch (e) {
-      return false;
-    }
-  }
+class LoadingScreen extends StatelessWidget {
+  const LoadingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Server Selection'),
-      ),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: _isLoading
-            ? Center(child: CircularProgressIndicator())
-            : Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextFormField(
-                      initialValue: _serverAddress,
-                      onChanged: (value) {
-                        setState(() {
-                          _serverAddress = value;
-                        });
-                      },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a valid server address';
-                        }
-                        if (!Uri.parse(value).isAbsolute) {
-                          return 'Invalid address format';
-                        }
-                        return null;
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'Server Address',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    SizedBox(height: 16.0),
-                    ElevatedButton(
-                      onPressed: () async {
-                        if (_formKey.currentState?.validate() ?? false) {
-                          if (await _validateServerAddress(_serverAddress!)) {
-                            await _saveServerAddress(_serverAddress!);
-                            Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(builder: (_) => MyHomePage()),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Invalid server address'),
-                              ),
-                            );
-                          }
-                        }
-                      },
-                      child: Text('Save and Continue'),
-                    ),
-                  ],
-                ),
-              ),
+      body: Center(
+        child: CircularProgressIndicator(),
       ),
     );
   }
 }
 
-class MyHomePage extends StatelessWidget {
+class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('My App'),
+        title: Text(' App'),
       ),
       body: Center(
         child: Text('Hello, World!'),

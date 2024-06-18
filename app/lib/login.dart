@@ -1,0 +1,131 @@
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'globals.dart' as globals;
+import 'server.dart';
+
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
+  @override
+  _LoginPageState createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
+  String? _username;
+  String? _password;
+  String? _jwt;
+
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+      _username = globals.username;
+      _password = globals.password;
+      _jwt = globals.jwt;
+    });
+  }
+
+  Future<void> _saveCredentials(
+      String username, String password, String jwtToken) async {
+    globals.username = username;
+    globals.password = password;
+    globals.jwt = jwtToken;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('username', username);
+    await prefs.setString('password', password);
+    await prefs.setString('jwt', jwtToken);
+  }
+
+  Future<bool> _login() async {
+    return true;
+  }
+
+  Future<bool> _validateToken() async {
+    final serverAddress = $globals.server_address;
+    final url = Uri.parse('$globals.server_address')
+    return true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Login'),
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextFormField(
+                initialValue: _username,
+                onChanged: (value) {
+                  setState(() {
+                    _username = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a valid username';
+                  }
+                  return null;
+                },
+                decoration: InputDecoration(
+                  labelText: 'Username',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 16.0),
+              TextFormField(
+                initialValue: _password,
+                onChanged: (value) {
+                  setState(() {
+                    _password = value;
+                  });
+                },
+                obscureText: true,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a valid password';
+                  }
+                  return null;
+                },
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 16.0),
+              ElevatedButton(
+                onPressed: () async {
+                  if (_formKey.currentState?.validate() ?? false) {
+                    if (await _validateLogin()) {
+                      await _saveCredentials(
+                          _username!, _password!, globals.jwt);
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (_) => HomePage()),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Invalid login credentials'),
+                        ),
+                      );
+                    }
+                  }
+                },
+                child: Text('Login'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
