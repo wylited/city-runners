@@ -9,7 +9,7 @@ import 'login.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeGlobals();
+  await globals.initializeGlobals();
   runApp(const App());
 }
 

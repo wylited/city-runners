@@ -5,9 +5,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'globals.dart' as globals;
 import 'server.dart';
-
-
 import 'login.dart';
+import 'main.dart';
 
 class ServerSelectionPage extends StatefulWidget {
   const ServerSelectionPage();

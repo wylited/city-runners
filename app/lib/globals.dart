@@ -1,5 +1,7 @@
 library city_runners.globals;
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 String server_address = '';
 String username = '';
 String password = '';

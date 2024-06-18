@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'globals.dart' as globals;
 import 'server.dart';
+import 'main.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -18,6 +19,7 @@ class _LoginPageState extends State<LoginPage> {
   String? _username;
   String? _password;
   String? _jwt;
+  String? _serverAddress;
 
   @override
   void initState() {
@@ -26,6 +28,7 @@ class _LoginPageState extends State<LoginPage> {
       _username = globals.username;
       _password = globals.password;
       _jwt = globals.jwt;
+      _serverAddress = globals.server_address;
     });
   }
 
@@ -40,14 +43,56 @@ class _LoginPageState extends State<LoginPage> {
     await prefs.setString('jwt', jwtToken);
   }
 
-  Future<bool> _login() async {
-    return true;
+  Future<String?> _login() async {
+    final headers = {
+      'Content-Type': 'application/json',
+    };
+
+    final body = {
+      'username': _username,
+      'password': _password,
+    };
+
+    final jsonBody = jsonEncode(body);
+
+    try {
+      final response = await http.post(
+        Uri.parse('$_serverAddress/login'),
+        headers: headers,
+        body: jsonBody,
+      );
+
+      if (response.statusCode == 202) {
+        final jsonData = jsonDecode(response.body);
+        return jsonData['token'];
+      } else {
+        print('failed at login');
+        return null; // or throw an exception
+      }
+    } catch (e) {
+      print('Error: $e');
+      return null; // or throw an exception
+    }
   }
 
-  Future<bool> _validateToken() async {
-    final serverAddress = $globals.server_address;
-    final url = Uri.parse('$globals.server_address')
-    return true;
+  Future<bool> _validateToken(String token) async {
+    final url = Uri.parse('$_serverAddress/validate');
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+      if (response.statusCode == 200) {
+        return true;
+      }
+      return false;
+      print('failed at validating token');
+    } catch (e) {
+      print('error $e');
+      return false;
+    }
   }
 
   @override
@@ -105,9 +150,9 @@ class _LoginPageState extends State<LoginPage> {
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState?.validate() ?? false) {
-                    if (await _validateLogin()) {
-                      await _saveCredentials(
-                          _username!, _password!, globals.jwt);
+                    String? token = await _login();
+                    if (token != null && await _validateToken(token)) {
+                      await _saveCredentials(_username!, _password!, token);
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute(builder: (_) => HomePage()),
                       );
