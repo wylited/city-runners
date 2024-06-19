@@ -31,13 +31,13 @@ jobs:
         run: flutter build appbundle
 
       - name: Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: android-apk
           path: app/build/app/outputs/flutter-apk/app-release.apk
 
       - name: Upload App Bundle
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: android-appbundle
           path: app/build/app/outputs/bundle/release/app-release.aab
@@ -82,7 +82,7 @@ jobs:
           mv Payload.zip app.ipa
 
       - name: Upload iOS IPA
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ios-ipa
           path: app/build/ios/Release-iphoneos/app.ipa

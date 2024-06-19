@@ -23,7 +23,7 @@ pub struct Player {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Claims {
+struct Claims {
     sub: String,
     exp: usize,
 }
