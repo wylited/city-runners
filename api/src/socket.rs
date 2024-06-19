@@ -1,9 +1,8 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use axum::{
     extract::{
-        ws::{Message, WebSocket},
-        Path, WebSocketUpgrade,
+        ws::{Message, WebSocket}, Path, Query, WebSocketUpgrade
     },
     http::StatusCode,
     response::{IntoResponse, Response},
@@ -27,13 +26,17 @@ struct Claims {
     exp: usize,
 }
 
+#[derive(Deserialize)]
+pub struct QueryParams {
+    token: String,
+}
 
 pub async fn handler(
     ws: WebSocketUpgrade,
-    Path(token): Path<String>,
-    user_agent: Option<TypedHeader<headers::UserAgent>>,
+    Query(params): Query<QueryParams>,
     Extension(game): Extension<Arc<RwLock<Game>>>,
 ) -> Response {
+    let token = params.token;
     let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "lasecret".to_string());
 
     return match decode::<Claims>(
