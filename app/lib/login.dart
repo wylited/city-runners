@@ -20,6 +20,7 @@ class _LoginPageState extends State<LoginPage> {
   String? _password;
   String? _jwt;
   String? _serverAddress;
+  bool _initialized = false;
 
   @override
   void initState() {
@@ -29,6 +30,10 @@ class _LoginPageState extends State<LoginPage> {
       _password = globals.password;
       _jwt = globals.jwt;
       _serverAddress = globals.server_address;
+    });
+
+    setState(() {
+      _initialized = true;
     });
   }
 
@@ -57,7 +62,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('$_serverAddress/login'),
+        Uri.parse('https://$_serverAddress/login'),
         headers: headers,
         body: jsonBody,
       );
@@ -67,16 +72,16 @@ class _LoginPageState extends State<LoginPage> {
         return jsonData['token'];
       } else {
         print('failed at login');
-        return null; // or throw an exception
+        return null;
       }
     } catch (e) {
       print('Error: $e');
-      return null; // or throw an exception
+      return null;
     }
   }
 
   Future<bool> _validateToken(String token) async {
-    final url = Uri.parse('$_serverAddress/validate');
+    final url = Uri.parse('https://$_serverAddress/validate');
     try {
       final response = await http.get(
         url,
@@ -97,6 +102,13 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_initialized) {
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text('Login'),

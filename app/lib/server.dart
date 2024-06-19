@@ -33,7 +33,7 @@ class _ServerSelectionPageState extends State<ServerSelectionPage> {
   }
 
   Future<bool> _validateServerAddress(String serverAddress) async {
-    final url = Uri.parse('$serverAddress');
+    final url = Uri.parse('https://$serverAddress/');
     try {
       final response = await http.get(url);
       return response.statusCode == 200;
@@ -43,7 +43,7 @@ class _ServerSelectionPageState extends State<ServerSelectionPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext contex) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Server Selection'),
@@ -66,7 +66,7 @@ class _ServerSelectionPageState extends State<ServerSelectionPage> {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a valid server address';
                   }
-                  if (!Uri.parse(value).isAbsolute) {
+                  if (!Uri.parse('https://$value/').isAbsolute) {
                     return 'Invalid address format';
                   }
                   return null;
