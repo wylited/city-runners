@@ -30,12 +30,12 @@ pub async fn axum(#[shuttle_runtime::Secrets] secrets: shuttle_runtime::SecretSt
         .route("/location", post(location::recieve))
         .route("/login", post(auth::login))
         .route("/validate", get(validate_token).layer(middleware::from_fn(auth::middleware)))
-        .route("/ws", get(socket::handler).layer(middleware::from_fn(auth::middleware)))
+        .route("/ws/{token}", get(socket::handler))
         .layer(Extension(Arc::new(RwLock::new(game))));
         // .layer(
         //     // a layer on the router so that it can trace all requests and responses for debugging.
         //     TraceLayer::new_for_http()
-        //         .make_span_with(DefaultMakeSpan::default().include_headers(true)),
+        //         .make_span_with (DefaultMakeSpan::default().include_headers(true)),
         // );
 
     Ok(app.into())

@@ -23,7 +23,7 @@ pub struct Player {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Claims {
+pub struct Claims {
     sub: String,
     exp: usize,
 }
@@ -99,7 +99,7 @@ pub fn jwt(username: &str) -> String {
     .unwrap()
 }
 
-async fn authenticate(expiry: usize, username: &str, token: &str, game: Arc<RwLock<Game>>) -> bool {
+pub async fn authenticate(expiry: usize, username: &str, token: &str, game: Arc<RwLock<Game>>) -> bool {
     game.read()
         .await
         .players

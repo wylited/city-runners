@@ -10,40 +10,57 @@ use axum::{
     Extension,
 };
 use axum_extra::TypedHeader;
-use serde::Serialize;
+use jsonwebtoken::{decode, DecodingKey, Validation};
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
-use crate::game::Game;
+use crate::{auth, game::Game};
 
 #[derive(Debug, Serialize)]
 pub struct ErrorResponse {
     error: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct Claims {
+    sub: String,
+    exp: usize,
+}
+
+
 pub async fn handler(
     ws: WebSocketUpgrade,
+    Path(token): Path<String>,
     user_agent: Option<TypedHeader<headers::UserAgent>>,
     Extension(game): Extension<Arc<RwLock<Game>>>,
-    Extension(username): Extension<String>,
 ) -> Response {
+    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "lasecret".to_string());
 
-    if let Some(TypedHeader(ua)) = user_agent {
-        tracing::info!("{0} connected from {ua}", username);
-    } else {
-        tracing::info!("{0} connected from an unknown client", username);
-    };
+    return match decode::<Claims>(
+                &token,
+                &DecodingKey::from_secret(secret.as_ref()),
+                &Validation::new(jsonwebtoken::Algorithm::HS256),
+            ) {
+            Ok(token_data) => {
+                let claims = token_data.claims;
+                let username = claims.sub;
+                if auth::authenticate(claims.exp, &username, &token, game.clone()).await {
+                    {
+                        game.write()
+                            .await
+                            .players
+                            .get_mut(&username)
+                            .unwrap()
+                            .connected = true;
+                    }
 
-    {
-        game.write()
-            .await
-            .players
-            .get_mut(&username)
-            .unwrap()
-            .connected = true;
-    }
-
-    ws.on_upgrade(move |socket| websocket(socket, username, game))
-        .into_response()
+                    return ws.on_upgrade(move |socket| websocket(socket, username, game)) .into_response();
+                } else {
+                    return (StatusCode::UNAUTHORIZED, "Unauthorized".to_string()).into_response()
+                }
+            }
+            Err(_) => (StatusCode::UNAUTHORIZED, "Invalid token".to_string()).into_response(),
+        }
 }
 
 pub async fn websocket(mut socket: WebSocket, who: String, game: Arc<RwLock<Game>>) {
