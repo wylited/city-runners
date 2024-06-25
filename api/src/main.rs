@@ -3,24 +3,33 @@ mod config;
 mod game;
 mod location;
 mod logging;
-mod models;
 pub mod socket;
 
 use axum::{
-    extract::Extension, http::StatusCode, middleware, response::IntoResponse, routing::{get, post}, Json, Router
+    extract::Extension,
+    http::StatusCode,
+    middleware,
+    response::IntoResponse,
+    routing::{get, post},
+    Json, Router,
 };
 use serde_json::json;
 
-use std::{net::SocketAddr, sync::Arc};
+use std::sync::Arc;
 use tokio::sync::RwLock;
-use tower_http::trace::{DefaultMakeSpan, TraceLayer};
 
 use crate::game::Game;
 
 #[shuttle_runtime::main]
-pub async fn axum(#[shuttle_runtime::Secrets] secrets: shuttle_runtime::SecretStore,) -> shuttle_axum::ShuttleAxum {
+pub async fn axum(
+    #[shuttle_runtime::Secrets] secrets: shuttle_runtime::SecretStore,
+) -> shuttle_axum::ShuttleAxum {
     // logging::init();
-    let game = Game::new(&secrets.get("EDGEDB_INSTANCE").unwrap(), &secrets.get("EDGEDB_SECRET_KEY").unwrap() ).await; // do later
+    let game = Game::new(
+        &secrets.get("EDGEDB_INSTANCE").unwrap(),
+        &secrets.get("EDGEDB_SECRET_KEY").unwrap(),
+    )
+    .await; // do later
 
     let app = Router::new()
         .route(
@@ -29,14 +38,17 @@ pub async fn axum(#[shuttle_runtime::Secrets] secrets: shuttle_runtime::SecretSt
         ) // initial check for the frontend.
         .route("/location", post(location::recieve))
         .route("/login", post(auth::login))
-        .route("/validate", get(validate_token).layer(middleware::from_fn(auth::middleware)))
+        .route(
+            "/validate",
+            get(validate_token).layer(middleware::from_fn(auth::middleware)),
+        )
         .route("/ws", get(socket::handler))
         .layer(Extension(Arc::new(RwLock::new(game))));
-        // .layer(
-        //     // a layer on the router so that it can trace all requests and responses for debugging.
-        //     TraceLayer::new_for_http()
-        //         .make_span_with (DefaultMakeSpan::default().include_headers(true)),
-        // );
+    // .layer(
+    //     // a layer on the router so that it can trace all requests and responses for debugging.
+    //     TraceLayer::new_for_http()
+    //         .make_span_with (DefaultMakeSpan::default().include_headers(true)),
+    // );
 
     Ok(app.into())
 }
@@ -77,8 +89,6 @@ pub async fn axum(#[shuttle_runtime::Secrets] secrets: shuttle_runtime::SecretSt
 //     axum::serve(listener, app).await.unwrap(); // serve the api
 // }
 
-async fn validate_token(
-    Extension(username): Extension<String>,
-) -> impl IntoResponse {
+async fn validate_token(Extension(username): Extension<String>) -> impl IntoResponse {
     (StatusCode::OK, Json(json!({"username": username})))
 }

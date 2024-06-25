@@ -52,7 +52,11 @@ pub async fn login(
 
             (StatusCode::ACCEPTED, Json(json!({"token": token}))).into_response()
         } else {
-            (StatusCode::UNAUTHORIZED, Json(json!({"error": "Invalid password"}))).into_response()
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(json!({"error": "Invalid password"})),
+            )
+                .into_response()
         }
     } else if res.is_ok() {
         let hashed_password = hash(&payload.password, DEFAULT_COST).unwrap();
@@ -68,7 +72,8 @@ pub async fn login(
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(json!({"error": "Failed to insert new player"})),
-            ).into_response();
+            )
+                .into_response();
         }
 
         let token = jwt(&payload.username);
@@ -81,7 +86,11 @@ pub async fn login(
         }
         return (StatusCode::ACCEPTED, Json(json!({"token": token}))).into_response();
     } else {
-        return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error":"Server error"}))).into_response();
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({"error":"Server error"})),
+        )
+            .into_response();
     }
 }
 
@@ -99,7 +108,12 @@ pub fn jwt(username: &str) -> String {
     .unwrap()
 }
 
-pub async fn authenticate(expiry: usize, username: &str, token: &str, game: Arc<RwLock<Game>>) -> bool {
+pub async fn authenticate(
+    expiry: usize,
+    username: &str,
+    token: &str,
+    game: Arc<RwLock<Game>>,
+) -> bool {
     game.read()
         .await
         .players
