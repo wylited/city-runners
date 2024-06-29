@@ -15,17 +15,13 @@ use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
-use crate::{auth, game::Game};
+use crate::{auth::{self, AuthClaims}, game::Game};
+
+pub type Tx = Arc<RwLock<SplitSink<WebSocket, Message>>>;
 
 #[derive(Debug, Serialize)]
 pub struct ErrorResponse {
     error: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Claims {
-    sub: String,
-    exp: usize,
 }
 
 #[derive(Deserialize)]
@@ -41,7 +37,7 @@ pub async fn handler(
     let token = params.token;
     let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "lasecret".to_string());
 
-    return match decode::<Claims>(
+    return match decode::<AuthClaims>(
         &token,
         &DecodingKey::from_secret(secret.as_ref()),
         &Validation::new(jsonwebtoken::Algorithm::HS256),
@@ -72,87 +68,97 @@ pub async fn handler(
 
 pub async fn websocket(socket: WebSocket, who: String, game: Arc<RwLock<Game>>) {
     let (mut tx, mut rx) = socket.split();
-    // Make sure that the socket connection works
-    if tx.send(Message::Ping(vec![1])).await.is_ok() {
-        tracing::info!("Pinged {who}... ");
-    } else {
-        tracing::error!("Could not send ping to {who}!");
-        // since we can't send messages, we have to end the connection
+    if !ping(&mut tx, &who).await {
         return;
     }
 
-    // give tx to the game
-    {
-        game.write()
-            .await
-            .players
-            .get_mut(&who)
-            .unwrap()
-            .set_stream(tx);
-    }
+    assign_stream(&game, &who, tx).await;
 
     tokio::spawn(async move {
-        let mut cnt = 0;
-        while let Some(Ok(msg)) = rx.next().await {
-            cnt += 1;
-            match msg {
-                Message::Text(text) => {
-                    tracing::info!("Received text message from {who}: {text}");
-
-                    let json: serde_json::Value = match serde_json::from_str(&text) {
-                        Ok(json) => json,
-                        Err(_) => {
-                            game.write().await.players.get_mut(&who).unwrap().send_msg(Message::Text(
-                                serde_json::to_string(&ErrorResponse {
-                                    error: "Invalid JSON".to_string(),
-                                })
-                                .unwrap(),
-                            )).await;
-                            tracing::error!("Invalid JSON from {who}: {text}");
-                            continue;
-                        }
-                    };
-
-                   json.get("op").map(|op| {
-                        if let serde_json::Value::String(op) = op {
-                            match op.as_str() {
-                                "move" => {
-
-                                }
-                                "chat" => {
-                                    let msg = json.get("msg").unwrap().as_str().unwrap();
-                                    tracing::info!("{}", msg);
-                                    block_on(chat(who.clone(), game.clone(), msg.to_string())); // await basically
-                                }
-                                _ => {
-                                    tracing::error!("Invalid operation from {who}: {op}");
-                                }
-                            }
-                        }
-                    });
-                }
-                Message::Binary(bin) => {
-                    tracing::info!("Received binary message from {who}: {:?}", bin);
-                }
-                Message::Ping(ping) => {
-                    tracing::info!("Received ping from {who}: {:?}", ping);
-                }
-                Message::Pong(pong) => {
-                    tracing::info!("Received pong from {who}: {:?}", pong);
-                }
-                Message::Close(reason) => {
-                    tracing::info!("Received close from {who}: {:?}", reason);
-                    break;
-                }
-            }
-        }
-
-        tracing::info!("Connection with {who} closed.");
-        {
-            game.write().await.players.get_mut(&who).unwrap().connected = false;
-        }
-        cnt
+        handle_messages(&mut rx, &who, game).await;
     });
+}
+
+async fn ping(tx: &mut impl SinkExt<Message>, who: &str) -> bool {
+    match tx.send(Message::Ping(vec![1])).await {
+        Ok(_) => {
+            tracing::info!("Pinged {}... ", who);
+            true
+        },
+        Err(_) => {
+            tracing::error!("Could not send ping to {}!", who);
+            false
+        },
+    }
+}
+
+async fn assign_stream(game: &Arc<RwLock<Game>>, who: &str, tx: impl SinkExt<Message> + Send + 'static) {
+    game.write()
+        .await
+        .players
+        .get_mut(who)
+        .unwrap()
+        .set_stream(tx);
+}
+
+async fn handle_messages(rx: &mut impl StreamExt<Item = Result<Message, warp::Error>>, who: &str, game: Arc<RwLock<Game>>) {
+    let mut cnt = 0;
+    while let Some(Ok(msg)) = rx.next().await {
+        cnt += 1;
+        process_message(msg, who, &game).await;
+    }
+
+    tracing::info!("Connection with {} closed.", who);
+    game.write().await.players.get_mut(who).unwrap().connected = false;
+}
+
+async fn process_message(msg: Message, who: &str, game: &Arc<RwLock<Game>>) {
+    match msg {
+        Message::Text(text) => handle_text_message(text, who, game).await,
+        Message::Binary(bin) => tracing::info!("Received binary message from {}: {:?}", who, bin),
+        Message::Ping(ping) => tracing::info!("Received ping from {}: {:?}", who, ping),
+        Message::Pong(pong) => tracing::info!("Received pong from {}: {:?}", who, pong),
+        Message::Close(reason) => tracing::info!("Received close from {}: {:?}", who, reason),
+    }
+}
+
+async fn handle_text_message(text: String, who: &str, game: &Arc<RwLock<Game>>) {
+    tracing::info!("Received text message from {}: {}", who, text);
+
+    let json = match serde_json::from_str::<serde_json::Value>(&text) {
+        Ok(json) => json,
+        Err(_) => {
+            send_invalid_json_error(who, game).await;
+            tracing::error!("Invalid JSON from {}: {}", who, text);
+            return;
+        }
+    };
+
+    if let Some(op) = json.get("op").and_then(|op| op.as_str()) {
+        match op {
+            "location" => handle_location_op(&json, who, game).await,
+            "chat" => handle_chat_op(&json, who, game).await,
+            _ => tracing::error!("Invalid operation from {}: {}", who, op),
+        }
+    }
+}
+
+async fn send_invalid_json_error(who: &str, game: &Arc<RwLock<Game>>) {
+    let error_response = json!({ "error": "Invalid JSON" });
+    let error_msg = serde_json::to_string(&error_response).unwrap();
+    game.write().await.players.get_mut(who).unwrap().send_msg(Message::Text(error_msg)).await.unwrap();
+}
+
+async fn handle_location_op(json: &serde_json::Value, who: &str, game: &Arc<RwLock<Game>>) {
+    let latitude = json.get("latitude").unwrap().as_f64().unwrap();
+    let longitude = json.get("longitude").unwrap().as_f64().unwrap();
+    game.write().await.get_player(who.to_string()).unwrap().set_location(Location::new(latitude, longitude)).await;
+}
+
+async fn handle_chat_op(json: &serde_json::Value, who: &str, game: &Arc<RwLock<Game>>) {
+    let msg = json.get("msg").unwrap().as_str().unwrap();
+    tracing::info!("{}", msg);
+    chat(who.to_string(), game.clone(), msg.to_string()).await;
 }
 
 pub async fn chat(who: String, game: Arc<RwLock<Game>>, msg: String) {

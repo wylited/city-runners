@@ -1,14 +1,62 @@
-use axum::{extract::Json, response::IntoResponse};
 use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize, Debug)]
+ccccccc
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Location {
-    latitude: f64,
-    longitude: f64,
+    pub latitude: f64,
+    pub longitude: f64,
+    pub timestamp: Option<i64>,
 }
 
-pub async fn recieve(Json(location): Json<Location>) -> impl IntoResponse {
-    tracing::info!("Received location: {:?}", location);
+impl Location {
+    pub fn plain(latitude: f64, longitude: f64) -> Self {
+        Self {
+            latitude,
+            longitude,
+            timestamp: None,
+        }
+    }
 
-    "Location received successfully!".into_response()
+    pub fn now(latitude: f64, longitude: f64) -> Self {
+        Self {
+            latitude,
+            longitude,
+            timestamp: Some(chrono::Utc::now().timestamp()),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+struct Station {
+    name: String,
+    code: String,
+    district: String,
+    location: Location,
+}
+
+#[derive(Serialize, Deserialize)]
+enum Line {
+    EastRail,
+    KwunTong,
+    TsuenWan,
+    Island,
+    TungChung,
+    AirportExpress,
+    TseungKwanO,
+    TuenMa,
+    DisneylandResort,
+    SouthIsland,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Edge {
+    from: String,
+    to: String,
+    line: Line,
+    travel_time: u32, // in minutes
+}
+
+#[derive(Serialize, Deserialize)]
+struct MTRGraph {
+    stations: Vec<Station>,
+    edges: Vec<Edge>,
 }

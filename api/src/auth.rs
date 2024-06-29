@@ -23,9 +23,9 @@ pub struct Player {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Claims {
-    sub: String,
-    exp: usize,
+pub struct AuthClaims {
+    pub sub: String,
+    pub exp: usize,
 }
 
 pub async fn login(
@@ -75,7 +75,7 @@ pub async fn login(
             )
                 .into_response();
         }
-
+i
         let token = jwt(&payload.username);
         {
             let mut game_write = game.write().await;
@@ -96,7 +96,7 @@ pub async fn login(
 
 pub fn jwt(username: &str) -> String {
     let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "lasecret".to_string()); // TODO: Make this a config variable or understand what environment is
-    let claims = Claims {
+    let claims = AuthClaims {
         sub: username.to_owned(),
         exp: (chrono::Utc::now() + chrono::Duration::hours(24)).timestamp() as usize, // expires 24 hours later
     };
@@ -132,7 +132,7 @@ pub async fn middleware(
     let token = bearer.token();
     let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "lasecret".to_string());
 
-    if let Ok(token_data) = decode::<Claims>(
+    if let Ok(token_data) = decode::<AuthClaims>(
         token,
         &DecodingKey::from_secret(secret.as_ref()),
         &Validation::new(jsonwebtoken::Algorithm::HS256),

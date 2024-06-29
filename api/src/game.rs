@@ -1,18 +1,12 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::{auth, config::Config};
+use crate::{auth, config::Config, mtr::Location, socket::Tx};
 use axum::extract::ws::{Message, WebSocket};
 use edgedb_tokio::{Builder, Client, Queryable};
 use futures::{stream::SplitSink, SinkExt};
 use serde::Serialize;
 use tokio::sync::RwLock;
 
-pub type Tx = Arc<RwLock<SplitSink<WebSocket, Message>>>;
-
-#[derive(Debug)]
-pub struct Location {
-
-}
 
 #[derive(Debug)]
 pub enum PlayerType {
@@ -30,7 +24,7 @@ pub struct Player {
     pub connected: bool,
     pub ptype: PlayerType,
     pub stream: Option<Tx>,
-    pub current_location: Option<>
+    pub current_location: Option<Location>
 }
 
 impl Player {
@@ -41,6 +35,7 @@ impl Player {
             ptype: PlayerType::Spectator,
             connected: false,
             stream: None,
+            current_location: None,
         }
     }
 
@@ -61,6 +56,10 @@ impl Player {
         }
     }
 
+    pub fn set_location(&mut self, location: Location) {
+        self.current_location = Some(location);
+    }
+
     pub fn set_stream(&mut self, stream: SplitSink<WebSocket, Message>) {
         self.stream = Some(Arc::new(RwLock::new(stream)));
     }
@@ -76,6 +75,9 @@ impl Player {
         } else {
             return Err("No connection found".to_string());
         }
+    }
+    pub async fn set_location(&mut self, location: Location) {
+        self.current_location = Some(location);
     }
 }
 
