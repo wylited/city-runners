@@ -3,8 +3,9 @@ mod config;
 mod game;
 mod mtr;
 mod logging;
-pub mod socket;
-pub mod location;
+mod socket;
+mod location;
+mod teams;
 
 use axum::{
     extract::Extension,
@@ -37,7 +38,6 @@ pub async fn axum(
             "/",
             get(|| async { format!("City Runners, version {} \n", env!("CARGO_PKG_VERSION")) }),
         ) // initial check for the frontend.
-        .route("/location", post(mtr::recieve))
         .route("/login", post(auth::login))
         .route(
             "/validate",

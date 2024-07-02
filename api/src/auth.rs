@@ -75,7 +75,6 @@ pub async fn login(
             )
                 .into_response();
         }
-i
         let token = jwt(&payload.username);
         {
             let mut game_write = game.write().await;

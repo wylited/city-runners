@@ -1,12 +1,11 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::{auth, config::Config, mtr::Location, socket::Tx};
+use crate::{auth, config::Config, location::Location, socket::Tx, teams::Team};
 use axum::extract::ws::{Message, WebSocket};
 use edgedb_tokio::{Builder, Client, Queryable};
 use futures::{stream::SplitSink, SinkExt};
 use serde::Serialize;
 use tokio::sync::RwLock;
-
 
 #[derive(Debug)]
 pub enum PlayerType {
@@ -73,24 +72,9 @@ impl Player {
             }
             Ok(())
         } else {
-            return Err("No connection found".to_string());
+            Err("No connection found".to_string())
         }
     }
-    pub async fn set_location(&mut self, location: Location) {
-        self.current_location = Some(location);
-    }
-}
-
-pub enum TeamType {
-    Seeker,
-    Hider,
-    Spectator,
-}
-
-pub struct Team {
-    pub name: String,
-    pub players: Vec<String>,
-    pub ttype: TeamType,
 }
 
 pub enum GameState {
@@ -160,6 +144,14 @@ impl Game {
 
     pub async fn get_player(&self, username: &str) -> Result<&Player, String> {
         if let Some(player) = self.players.get(username) {
+            Ok(player)
+        } else {
+            Err("Player not found".to_string())
+        }
+    }
+
+    pub async fn get_mut_player(&mut self, username: &str) -> Result<&mut Player, String> {
+        if let Some(player) = self.players.get_mut(username) {
             Ok(player)
         } else {
             Err("Player not found".to_string())

@@ -10,12 +10,13 @@ use axum::{
     Extension,
 };
 
-use futures::{executor::block_on, sink::SinkExt, stream::StreamExt};
+use futures::{sink::SinkExt, stream::{SplitSink, SplitStream, StreamExt}};
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use tokio::sync::RwLock;
 
-use crate::{auth::{self, AuthClaims}, game::Game};
+use crate::{auth::{self, AuthClaims}, game::Game, location::{handle_location_op}};
 
 pub type Tx = Arc<RwLock<SplitSink<WebSocket, Message>>>;
 
@@ -67,7 +68,7 @@ pub async fn handler(
 }
 
 pub async fn websocket(socket: WebSocket, who: String, game: Arc<RwLock<Game>>) {
-    let (mut tx, mut rx) = socket.split();
+    let (mut tx, rx) = socket.split();
     if !ping(&mut tx, &who).await {
         return;
     }
@@ -75,11 +76,11 @@ pub async fn websocket(socket: WebSocket, who: String, game: Arc<RwLock<Game>>) 
     assign_stream(&game, &who, tx).await;
 
     tokio::spawn(async move {
-        handle_messages(&mut rx, &who, game).await;
+        handle_messages(rx, &who, game).await;
     });
 }
 
-async fn ping(tx: &mut impl SinkExt<Message>, who: &str) -> bool {
+async fn ping(tx: &mut SplitSink<WebSocket, Message>, who: &str) -> bool {
     match tx.send(Message::Ping(vec![1])).await {
         Ok(_) => {
             tracing::info!("Pinged {}... ", who);
@@ -92,7 +93,7 @@ async fn ping(tx: &mut impl SinkExt<Message>, who: &str) -> bool {
     }
 }
 
-async fn assign_stream(game: &Arc<RwLock<Game>>, who: &str, tx: impl SinkExt<Message> + Send + 'static) {
+async fn assign_stream(game: &Arc<RwLock<Game>>, who: &str, tx: SplitSink<WebSocket, Message>) {
     game.write()
         .await
         .players
@@ -101,20 +102,20 @@ async fn assign_stream(game: &Arc<RwLock<Game>>, who: &str, tx: impl SinkExt<Mes
         .set_stream(tx);
 }
 
-async fn handle_messages(rx: &mut impl StreamExt<Item = Result<Message, warp::Error>>, who: &str, game: Arc<RwLock<Game>>) {
+async fn handle_messages(mut rx: SplitStream<WebSocket> , who: &str, game: Arc<RwLock<Game>>) {
     let mut cnt = 0;
     while let Some(Ok(msg)) = rx.next().await {
         cnt += 1;
         process_message(msg, who, &game).await;
     }
 
-    tracing::info!("Connection with {} closed.", who);
+    tracing::info!("Connection with {} closed. {} messages", who, cnt);
     game.write().await.players.get_mut(who).unwrap().connected = false;
 }
 
 async fn process_message(msg: Message, who: &str, game: &Arc<RwLock<Game>>) {
     match msg {
-        Message::Text(text) => handle_text_message(text, who, game).await,
+        Message::Text(text) => handle_json_message(text, who, game).await,
         Message::Binary(bin) => tracing::info!("Received binary message from {}: {:?}", who, bin),
         Message::Ping(ping) => tracing::info!("Received ping from {}: {:?}", who, ping),
         Message::Pong(pong) => tracing::info!("Received pong from {}: {:?}", who, pong),
@@ -122,7 +123,7 @@ async fn process_message(msg: Message, who: &str, game: &Arc<RwLock<Game>>) {
     }
 }
 
-async fn handle_text_message(text: String, who: &str, game: &Arc<RwLock<Game>>) {
+async fn handle_json_message(text: String, who: &str, game: &Arc<RwLock<Game>>) {
     tracing::info!("Received text message from {}: {}", who, text);
 
     let json = match serde_json::from_str::<serde_json::Value>(&text) {
@@ -149,11 +150,6 @@ async fn send_invalid_json_error(who: &str, game: &Arc<RwLock<Game>>) {
     game.write().await.players.get_mut(who).unwrap().send_msg(Message::Text(error_msg)).await.unwrap();
 }
 
-async fn handle_location_op(json: &serde_json::Value, who: &str, game: &Arc<RwLock<Game>>) {
-    let latitude = json.get("latitude").unwrap().as_f64().unwrap();
-    let longitude = json.get("longitude").unwrap().as_f64().unwrap();
-    game.write().await.get_player(who.to_string()).unwrap().set_location(Location::new(latitude, longitude)).await;
-}
 
 async fn handle_chat_op(json: &serde_json::Value, who: &str, game: &Arc<RwLock<Game>>) {
     let msg = json.get("msg").unwrap().as_str().unwrap();
