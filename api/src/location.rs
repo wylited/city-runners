@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
@@ -33,14 +33,18 @@ impl Location {
 pub async fn handle_location_op(json: &serde_json::Value, who: &str, game: &Arc<RwLock<Game>>) {
     let latitude = json.get("latitude").unwrap().as_f64().unwrap();
     let longitude = json.get("longitude").unwrap().as_f64().unwrap();
-    game.write().await.get_mut_player(who).await.unwrap().set_location(Location::new(latitude, longitude));
+    game.write()
+        .await
+        .get_mut_player(who)
+        .await
+        .unwrap()
+        .set_location(Location::new(latitude, longitude));
 }
 
 #[derive(Serialize, Deserialize)]
 struct Station {
     name: String,
     code: String,
-    district: String,
     location: Location,
 }
 
@@ -68,6 +72,6 @@ struct Edge {
 
 #[derive(Serialize, Deserialize)]
 struct MTRGraph {
-    stations: Vec<Station>,
+    stations: HashMap<String, Station>,
     edges: Vec<Edge>,
 }

@@ -1,10 +1,10 @@
 mod auth;
 mod config;
 mod game;
-mod mtr;
-mod logging;
-mod socket;
 mod location;
+mod logging;
+mod player;
+mod socket;
 mod teams;
 
 use axum::{
@@ -12,7 +12,7 @@ use axum::{
     http::StatusCode,
     middleware,
     response::IntoResponse,
-    routing::{get, post},
+    routing::{get, patch, post},
     Json, Router,
 };
 use serde_json::json;
@@ -42,6 +42,28 @@ pub async fn axum(
         .route(
             "/validate",
             get(validate_token).layer(middleware::from_fn(auth::middleware)),
+        )
+        .route(
+            "/teams/:name",
+            get(teams::get)
+                .post(teams::create)
+                .layer(middleware::from_fn(auth::middleware)),
+        )
+        .route(
+            "/teams/:name/join",
+            post(teams::join).layer(middleware::from_fn(auth::middleware)),
+        )
+        .route(
+            "/teams/:name/leave",
+            post(teams::leave).layer(middleware::from_fn(auth::middleware)),
+        )
+        .route(
+            "/teams/:name",
+            patch(teams::update_team_name).layer(middleware::from_fn(auth::middleware)),
+        )
+        .route(
+            "/teams",
+            get(teams::getall).layer(middleware::from_fn(auth::middleware)),
         )
         .route("/ws", get(socket::handler))
         .layer(Extension(Arc::new(RwLock::new(game))));

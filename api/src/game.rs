@@ -1,81 +1,9 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
-use crate::{auth, config::Config, location::Location, socket::Tx, teams::Team};
-use axum::extract::ws::{Message, WebSocket};
+use crate::{auth, config::Config, player::Player, socket::Tx, teams::Team};
+use axum::extract::ws::Message;
 use edgedb_tokio::{Builder, Client, Queryable};
-use futures::{stream::SplitSink, SinkExt};
 use serde::Serialize;
-use tokio::sync::RwLock;
-
-#[derive(Debug)]
-pub enum PlayerType {
-    Hider,
-    SecondarySeeker,
-    PrimarySeeker,
-    Admin,
-    Spectator,
-}
-
-#[derive(Debug)]
-pub struct Player {
-    pub username: String, // kinda like backlink, guaranteed the same as the key for players
-    pub token: String,
-    pub connected: bool,
-    pub ptype: PlayerType,
-    pub stream: Option<Tx>,
-    pub current_location: Option<Location>
-}
-
-impl Player {
-    pub fn new(username: String, token: String) -> Self {
-        Self {
-            username,
-            token,
-            ptype: PlayerType::Spectator,
-            connected: false,
-            stream: None,
-            current_location: None,
-        }
-    }
-
-    pub fn update_token(mut self, token: String) {
-        tracing::info!("Updating token from {0} to {1}", self.token, token);
-        self.token = token;
-    }
-
-    pub fn update_connection(mut self, connected: bool) {
-        tracing::info!(
-            "Updating connection from {0} to {1}",
-            self.connected,
-            connected
-        );
-        self.connected = connected;
-        if !connected {
-            self.stream = None;
-        }
-    }
-
-    pub fn set_location(&mut self, location: Location) {
-        self.current_location = Some(location);
-    }
-
-    pub fn set_stream(&mut self, stream: SplitSink<WebSocket, Message>) {
-        self.stream = Some(Arc::new(RwLock::new(stream)));
-    }
-
-    pub async fn send_msg(&self, msg: Message) -> Result<(), String> {
-        if let Some(ref arctx) = self.stream {
-            let mut tx = arctx.write().await;
-            let res = tx.send(msg).await;
-            if let Err(e) = res {
-                return Err(e.to_string());
-            }
-            Ok(())
-        } else {
-            Err("No connection found".to_string())
-        }
-    }
-}
 
 pub enum GameState {
     Lobby,     // Allow players to join and get ready
@@ -156,6 +84,26 @@ impl Game {
         } else {
             Err("Player not found".to_string())
         }
+    }
+
+    pub fn get_teams(&self) -> Vec<Team> {
+        self.teams.clone()
+    }
+
+    pub async fn get_team(&self, name: &str) -> Option<&Team> {
+        self.teams.iter().find(|team| team.name == name)
+    }
+
+    pub async fn get_mut_team(&mut self, name: &str) -> Option<&mut Team> {
+        self.teams.iter_mut().find(|team| team.name == name)
+    }
+
+    pub async fn new_team(&mut self, team: Team) -> Result<(), String> {
+        if self.teams.contains(&team) {
+            return Err("Team already exists".to_string());
+        }
+        self.teams.push(team);
+        Ok(())
     }
 
     pub async fn broadcast(&self, msg: Message) -> Result<(), String> {

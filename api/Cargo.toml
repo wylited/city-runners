@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 axum = { version = "0.7.5", features = ["ws", "json"] }
 axum-extra = { version = "0.9.3", features = ["typed-header"] }
+axum-macros = "0.4.1"
 bcrypt = "0.15.1"
 chrono = { version = "0.4.38", features = ["serde"] }
 cookie = "0.18.1"

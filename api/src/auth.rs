@@ -1,4 +1,4 @@
-use crate::{game, Game};
+use crate::{player, Game};
 use axum::{
     extract::{Extension, Json, Request},
     http::StatusCode,
@@ -80,7 +80,7 @@ pub async fn login(
             let mut game_write = game.write().await;
             game_write.players.insert(
                 payload.username.clone(),
-                game::Player::new(payload.username.clone(), token.clone()),
+                player::Player::new(payload.username.clone(), token.clone()),
             );
         }
         return (StatusCode::ACCEPTED, Json(json!({"token": token}))).into_response();
