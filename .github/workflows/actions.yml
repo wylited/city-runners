@@ -90,11 +90,10 @@ jobs:
       - name: Compress to ios.zip
         working-directory: ./app
         run: |
-          cd build/
           zip -r ios.zip ios
 
       - name: Upload iOS IPA
         uses: actions/upload-artifact@v4
         with:
           name: xcode folder
-          path: app/build/ios.zip
+          path: app/ios.zip
