@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'globals.dart' as globals;
 import 'server.dart';
 import 'main.dart';
+import 'teams.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -166,7 +167,7 @@ class _LoginPageState extends State<LoginPage> {
                     if (token != null && await _validateToken(token)) {
                       await _saveCredentials(_username!, _password!, token);
                       Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (_) => HomePage()),
+                        MaterialPageRoute(builder: (_) => TeamListPage()),
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
