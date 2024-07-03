@@ -120,6 +120,21 @@ class _TeamListPageState extends State<TeamListPage> {
     await _refreshTeams();
   }
 
+  Future<void> _joinTeam(String teamName) async {
+    // Join team on the server
+    final prefs = await SharedPreferences.getInstance();
+    String token = prefs.getString;
+    final headers = {
+      'Authorization': 'Bearer $token',
+    };
+
+    final response = await http.post(
+      Uri.parse('https://${globals.server_address}/teams/$teamName/join'),
+      headers: headers,
+    );
+    await _refreshTeams();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -136,30 +151,48 @@ class _TeamListPageState extends State<TeamListPage> {
               title: Text(team.name),
               subtitle: Text(
                   'Players: ${team.players.join(', ')} | Type: ${team.ttype.toShortString()}'),
+              trailing: IconButton(
+                icon: Icon(Icons.add),
+                onPressed: () {
+                  _joinTeam(team.name);
+                },
+              ),
             );
           },
         ),
       ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            onPressed: () => _showAddTeamDialog(context),
-            tooltip: 'Add Team',
-            child: Icon(Icons.add),
-          ),
-          SizedBox(height: 10),
-          FloatingActionButton(
-            backgroundColor: _isReady ? Colors.green : Colors.grey,
-            onPressed: () {
-              setState(() {
-                _isReady = !_isReady;
-              });
-            },
-            tooltip: 'Ready',
-            child: Icon(Icons.check),
-          ),
-        ],
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _showAddTeamDialog(context),
+                icon: Icon(Icons.add),
+                label: Text('Create New Team'),
+              ),
+            ),
+            SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.all(
+                      _isReady ? Colors.green : Colors.grey),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isReady = !_isReady;
+                  });
+                },
+                icon: Icon(Icons.check),
+                label: Text('Ready'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
+use petgraph::{Graph, Undirected};
 
 use crate::game::Game;
 
@@ -70,8 +71,7 @@ struct Edge {
     travel_time: u32, // in minutes
 }
 
-#[derive(Serialize, Deserialize)]
-struct MTRGraph {
+struct MTR {
     stations: HashMap<String, Station>,
-    edges: Vec<Edge>,
+    graph: Graph::<String, (u32, Line), Undirected>,
 }

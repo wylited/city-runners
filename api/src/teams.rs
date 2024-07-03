@@ -86,7 +86,9 @@ pub async fn create(
     Extension(username): Extension<String>,
     Path(name): Path<String>,
 ) -> impl IntoResponse {
-    if let Err(e) = game.write().await.new_team(Team::new(name.clone())).await {
+    let mut team = Team::new(name.clone());
+        team.add_player(username.clone());
+    if let Err(e) = game.write().await.new_team(team).await {
         return Json(json!({"error": e})).into_response();
     }
     info!("user {} created team: {:?}", username, name);
