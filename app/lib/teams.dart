@@ -123,7 +123,7 @@ class _TeamListPageState extends State<TeamListPage> {
   Future<void> _joinTeam(String teamName) async {
     // Join team on the server
     final prefs = await SharedPreferences.getInstance();
-    String token = prefs.getString ?? "no token lol";
+    String token = prefs.getString('jwt') ?? "no token lol";
     final headers = {
       'Authorization': 'Bearer $token',
     };
