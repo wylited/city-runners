@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'main.dart';
 import 'globals.dart' as globals;
 
 // Define TeamType Enum
@@ -298,9 +299,9 @@ class _TeamListPageState extends State<TeamListPage> {
                       _isReady ? Colors.green : Colors.grey),
                 ),
                 onPressed: () {
-                  setState(() {
-                    _isReady = !_isReady;
-                  });
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_) => HomePage()),
+                  );
                 },
                 icon: Icon(Icons.check),
                 label: Text('Ready'),

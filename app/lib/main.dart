@@ -8,6 +8,7 @@ import 'dart:async';
 import 'globals.dart' as globals;
 import 'server.dart';
 import 'login.dart';
+import 'map.dart'; // Import the map.dart to use MapWidget
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -152,82 +153,15 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
             ),
+            const SizedBox(height: 16),
+            // Adding the MapWidget to the HomePage
+            SizedBox(
+              height: 400, // Adjust height as needed
+              child: MapWidget(),
+            ),
           ],
         ),
       ),
     );
   }
 }
-// class Home extends StatefulWidget {
-//   const Home({super.key});
-
-//   @override
-//   State<Home> createState() => _HomeState();
-// }
-
-// class _LocationSenderState extends State<LocationSender> {
-//   int _counter = 0;
-
-//   Future<void> _sendLocationToServer() async {
-//     // Get the device's current location
-//     Position position = await Geolocator.getCurrentPosition(
-//         desiredAccuracy: LocationAccuracy.high);
-
-//     // Create a JSON payload with the location data
-//     Map<String, dynamic> locationData = {
-//       'latitude': position.latitude,
-//       'longitude': position.longitude,
-//     };
-
-//     // Send the location data to the API server
-//     final Uri url = Uri.parse(widget.serverAddress + '/location');
-//     final response = await http.post(
-//       url,
-//       headers: {
-//         'Content-Type': 'application/json',
-//       },
-//       body: jsonEncode(locationData),
-//     );
-
-//     // Check the response status code
-//     if (response.statusCode == 200) {
-//       print('Location sent successfully!');
-//     } else {
-//       print('Error sending location: ${response.statusCode}');
-//     }
-//   }
-
-//   void _incrementCounter() {
-//     setState(() {
-//       _counter++;
-//     });
-//     _sendLocationToServer(); // Call the function to send the location
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Location Sender'),
-//       ),
-//       body: Center(
-//         child: Column(
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: <Widget>[
-//             const Text(
-//               'You have pushed the button this many times:',
-//             ),
-//             Text(
-//               '$_counter',
-//               style: Theme.of(context).textTheme.headlineMedium,
-//             ),
-//             ElevatedButton(
-//               onPressed: _incrementCounter,
-//               child: const Text('Send Location'),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
