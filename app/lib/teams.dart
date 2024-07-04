@@ -44,12 +44,14 @@ class TeamListPage extends StatefulWidget {
 
 class _TeamListPageState extends State<TeamListPage> {
   List<Team> _teams = [];
+  String? _currentTeam;
   bool _isReady = false;
 
   @override
   void initState() {
     super.initState();
     _fetchTeams();
+    _getCurrentTeam();
   }
 
   Future<void> _fetchTeams() async {
@@ -84,8 +86,19 @@ class _TeamListPageState extends State<TeamListPage> {
     ''';
     }
     List<dynamic> jsonList = jsonDecode(jsonData);
+    // check if any of the teams in the json list contains our username under players
+    // if so set that team to our current team
+    String? currentTeam;
+    for (var teamJson in jsonList) {
+      Team team = Team.fromJson(teamJson);
+      if (team.players.contains(globals.username)) {
+        currentTeam = team.name;
+      }
+    }
+
     setState(() {
       _teams = jsonList.map((json) => Team.fromJson(json)).toList();
+      _currentTeam = currentTeam;
     });
   }
 
@@ -109,6 +122,9 @@ class _TeamListPageState extends State<TeamListPage> {
       );
 
       if (response.statusCode == 200) {
+        setState(() {
+          _currentTeam = name;
+        });
         print('success');
       } else {
         print('failed at creation');
@@ -121,9 +137,15 @@ class _TeamListPageState extends State<TeamListPage> {
   }
 
   Future<void> _joinTeam(String teamName) async {
+    if (_currentTeam != null) {
+      // Prompt user to leave current team first
+      _showLeaveCurrentTeamDialog();
+      return;
+    }
+
     // Join team on the server
     final prefs = await SharedPreferences.getInstance();
-    String token = prefs.getString('jwt') ?? "no token lol";
+    String token = prefs.getString('jwt') ?? "no token";
     final headers = {
       'Authorization': 'Bearer $token',
     };
@@ -132,7 +154,79 @@ class _TeamListPageState extends State<TeamListPage> {
       Uri.parse('https://${globals.server_address}/teams/$teamName/join'),
       headers: headers,
     );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        _currentTeam = teamName;
+      });
+    } else {
+      print('Failed to join team');
+    }
+
     await _refreshTeams();
+  }
+
+  Future<void> _leaveTeam() async {
+    if (_currentTeam == null) {
+      return;
+    }
+
+    // Leave current team on the server
+    final prefs = await SharedPreferences.getInstance();
+    String token = prefs.getString('jwt') ?? "no token";
+    final headers = {
+      'Authorization': 'Bearer $token',
+    };
+
+    final response = await http.post(
+      Uri.parse('https://${globals.server_address}/teams/$_currentTeam/leave'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        _currentTeam = null;
+      });
+    } else {
+      print('Failed to leave team');
+    }
+
+    await _refreshTeams();
+  }
+
+  Future<void> _getCurrentTeam() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _currentTeam = prefs.getString('currentTeam');
+    });
+  }
+
+  void _showLeaveCurrentTeamDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Leave Current Team'),
+          content: Text(
+              'You need to leave your current team before joining a new one. Do you want to leave your current team?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                _leaveTeam();
+                Navigator.of(context).pop();
+              },
+              child: Text('Leave'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -143,22 +237,36 @@ class _TeamListPageState extends State<TeamListPage> {
       ),
       body: RefreshIndicator(
         onRefresh: _refreshTeams,
-        child: ListView.builder(
-          itemCount: _teams.length,
-          itemBuilder: (context, index) {
-            final team = _teams[index];
-            return ListTile(
-              title: Text(team.name),
-              subtitle: Text(
-                  'Players: ${team.players.join(', ')} | Type: ${team.ttype.toShortString()}'),
-              trailing: IconButton(
-                icon: Icon(Icons.add),
-                onPressed: () {
-                  _joinTeam(team.name);
-                },
-              ),
-            );
-          },
+        child: Container(
+          color: Colors.grey[200], // background color
+          child: ListView.builder(
+            itemCount: _teams.length,
+            itemBuilder: (context, index) {
+              final team = _teams[index];
+              return Card(
+                child: ListTile(
+                  title: Text(
+                    team.name,
+                    style: TextStyle(fontSize: 24), // bigger title
+                  ),
+                  subtitle: Text('Players: ${team.players.join('\n')} '),
+                  trailing: _currentTeam == team.name
+                      ? IconButton(
+                          icon: Icon(Icons.clear),
+                          onPressed: () {
+                            _leaveTeam();
+                          },
+                        )
+                      : IconButton(
+                          icon: Icon(Icons.add),
+                          onPressed: () {
+                            _joinTeam(team.name);
+                          },
+                        ),
+                ),
+              );
+            },
+          ),
         ),
       ),
       bottomNavigationBar: Padding(
@@ -169,7 +277,14 @@ class _TeamListPageState extends State<TeamListPage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => _showAddTeamDialog(context),
+                onPressed: () {
+                  if (_currentTeam != null) {
+                    // Prompt user to leave current team
+                    _showLeaveCurrentTeamDialog();
+                    return;
+                  }
+                  _showAddTeamDialog(context);
+                },
                 icon: Icon(Icons.add),
                 label: Text('Create New Team'),
               ),
