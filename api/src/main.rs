@@ -4,23 +4,20 @@ mod game;
 mod location;
 mod logging;
 mod player;
+mod router;
 mod socket;
 mod teams;
+mod timer;
 
 use axum::{
-    extract::Extension,
-    http::StatusCode,
-    middleware,
-    response::IntoResponse,
-    routing::{get, patch, post},
-    Json, Router,
+    extract::Extension, http::StatusCode, middleware, response::IntoResponse, Json,
 };
 use serde_json::json;
 
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-use crate::game::Game;
+use crate::{game::Game, router::router};
 
 #[shuttle_runtime::main]
 pub async fn axum(
@@ -31,42 +28,10 @@ pub async fn axum(
         &secrets.get("EDGEDB_INSTANCE").unwrap(),
         &secrets.get("EDGEDB_SECRET_KEY").unwrap(),
     )
-    .await; // do later
+    .await;
 
-    let app = Router::new()
-        .route(
-            "/",
-            get(|| async { format!("City Runners, version {} \n", env!("CARGO_PKG_VERSION")) }),
-        ) // initial check for the frontend.
-        .route("/login", post(auth::login))
-        .route(
-            "/validate",
-            get(validate_token).layer(middleware::from_fn(auth::middleware)),
-        )
-        .route(
-            "/teams/:name",
-            get(teams::get)
-                .post(teams::create)
-                .layer(middleware::from_fn(auth::middleware)),
-        )
-        .route(
-            "/teams/:name/join",
-            post(teams::join).layer(middleware::from_fn(auth::middleware)),
-        )
-        .route(
-            "/teams/:name/leave",
-            post(teams::leave).layer(middleware::from_fn(auth::middleware)),
-        )
-        .route(
-            "/teams/:name",
-            patch(teams::update_team_name).layer(middleware::from_fn(auth::middleware)),
-        )
-        .route(
-            "/teams",
-            get(teams::getall).layer(middleware::from_fn(auth::middleware)),
-        )
-        .route("/ws", get(socket::handler))
-        .layer(Extension(Arc::new(RwLock::new(game))));
+    let app = router().layer(Extension(Arc::new(RwLock::new(game))));
+
     // .layer(
     //     // a layer on the router so that it can trace all requests and responses for debugging.
     //     TraceLayer::new_for_http()

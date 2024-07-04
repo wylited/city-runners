@@ -87,7 +87,7 @@ pub async fn create(
     Path(name): Path<String>,
 ) -> impl IntoResponse {
     let mut team = Team::new(name.clone());
-        team.add_player(username.clone());
+    team.add_player(username.clone());
     if let Err(e) = game.write().await.new_team(team).await {
         return Json(json!({"error": e})).into_response();
     }
@@ -101,7 +101,21 @@ pub async fn join(
     Extension(username): Extension<String>,
 ) -> impl IntoResponse {
     let mut game = game.write().await;
+
+    {
+        let player = game.get_mut_player(&username).await;
+        if player.is_err() {
+            return Json(json!({"error": "Player not found"})).into_response();
+        }
+        let player = player.unwrap();
+        if player.team.is_some() {
+            return Json(json!({"error": "Player already on a team"})).into_response();
+        }
+        player.team = Some(team_name.clone());
+    }
+
     let team = game.get_mut_team(&team_name).await;
+
     if let Some(team) = team {
         team.add_player(username.clone());
         info!("user {} added to team: {}", username, team_name);
@@ -116,6 +130,13 @@ pub async fn leave(
     Extension(username): Extension<String>,
 ) -> impl IntoResponse {
     let mut game = game.write().await;
+    {
+        let player = game.get_mut_player(&username).await;
+        if player.is_err() {
+            return Json(json!({"error": "Player not found"})).into_response();
+        }
+        player.unwrap().team = None;
+    }
     let team = game.get_mut_team(&team_name).await;
     if team.is_none() {
         return Json(json!({"error": "Team not found"})).into_response();

@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 
-use crate::{auth, config::Config, player::Player, socket::Tx, teams::Team};
+use crate::{auth, config::Config, player::Player, socket::Tx, teams::Team, timer::Timer};
 use axum::extract::ws::Message;
 use edgedb_tokio::{Builder, Client, Queryable};
 use serde::Serialize;
@@ -16,6 +16,7 @@ pub struct Game {
     pub state: GameState,
     pub config: Config,
     pub db: Client,
+    pub timer: Option<Timer>,
     pub players: HashMap<String, Player>,
     pub teams: Vec<Team>,
     pub connections: HashMap<String, Tx>, //username agains string
@@ -58,6 +59,7 @@ impl Game {
             players,
             teams: Vec::new(),
             connections: HashMap::new(),
+            timer: None,
         }
     }
 
@@ -86,6 +88,19 @@ impl Game {
         }
     }
 
+    pub fn all_players_ready(&self) -> bool {
+        self.players.values().all(|player| player.ready)
+    }
+
+    pub async fn broadcast(&self, msg: Message) -> Result<(), String> {
+        for (_, player) in self.players.iter() {
+            if player.connected {
+                player.send_msg(msg.clone()).await?;
+            }
+        }
+        Ok(())
+    }
+
     pub fn get_teams(&self) -> Vec<Team> {
         self.teams.clone()
     }
@@ -106,12 +121,45 @@ impl Game {
         Ok(())
     }
 
-    pub async fn broadcast(&self, msg: Message) -> Result<(), String> {
-        for (_, player) in self.players.iter() {
-            if player.connected {
-                player.send_msg(msg.clone()).await?;
+    async fn update_state(&mut self) {
+        match self.state {
+            GameState::Lobby => {
+                if self.all_players_ready() {
+                    self.state = GameState::HidePhase;
+                    self.timer = Some(Timer::new(Duration::from_millis(30 * 60 * 1000)));
+                }
+            }
+            GameState::HidePhase => {
+                if let Some(timer) = &self.timer {
+                    if timer.elapsed() {
+                        self.state = GameState::SeekPhase;
+                        self.timer = Some(Timer::new(Duration::from_millis(60 * 60 * 1000)));
+                    }
+                }
+            }
+            GameState::SeekPhase => {
+                if let Some(timer) = &self.timer {
+                    if timer.elapsed() {
+                        self.state = GameState::RoundEnd;
+                        self.timer = Some(Timer::new(Duration::from_millis(5 * 60 * 1000)));
+                    }
+                }
+            }
+            GameState::RoundEnd => {
+                if let Some(timer) = &self.timer {
+                    if timer.elapsed() {
+                        self.state = GameState::Lobby;
+                        self.timer = None;
+                    }
+                }
             }
         }
-        Ok(())
+    }
+
+    fn remaining_time(&self) -> Option<Duration> {
+        if let Some(timer) = &self.timer {
+            return Some(timer.remaining());
+        }
+        None
     }
 }
