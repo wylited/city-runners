@@ -9,7 +9,6 @@ use axum::{
     response::{IntoResponse, Response},
     Extension,
 };
-
 use futures::{
     sink::SinkExt,
     stream::{SplitSink, SplitStream, StreamExt},

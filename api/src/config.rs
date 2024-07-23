@@ -7,6 +7,8 @@ pub struct Config {
     pub game_password: String,
     pub database_url: String,
     pub address: String,
+    // pub admin_username: String,
+    // pub admin_password: String,
     // Add more config values as needed
 }
 
@@ -26,6 +28,8 @@ impl Config {
                 game_password: "default_game_password".to_string(),
                 database_url: "postgres://username:password@localhost/mygame".to_string(),
                 address: "0.0.0.0:3000".to_string(),
+                // admin_username: "admin".to_string(),
+                // admin_password: "admin_password".to_string(),
                 // Initialize other config values with default values
             };
             let config_str = serde_json::to_string_pretty(&default_config).unwrap();

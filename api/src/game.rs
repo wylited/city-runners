@@ -1,9 +1,10 @@
-use std::{collections::HashMap, time::Duration};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use crate::{auth, config::Config, player::Player, socket::Tx, teams::Team, timer::Timer};
 use axum::extract::ws::Message;
 use edgedb_tokio::{Builder, Client, Queryable};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use tokio::{sync::RwLock, time};
 
 pub enum GameState {
     Lobby,     // Allow players to join and get ready
@@ -35,15 +36,24 @@ impl Game {
         );
 
         db.ensure_connected().await.unwrap();
+        let a_username = "umnotfuckingdefault".to_string();
+        let a_jwt = auth::jwt(&a_username);
+
 
         #[derive(Queryable, Serialize)]
         struct DbPlayer {
             username: String,
         }
 
+        #[derive(Queryable, Deserialize, Serialize)]
+        struct DbPlayer2 {
+            id: String,
+        }
+
+
         let query = "select Player {username}";
         let res: Vec<DbPlayer> = db.query(query, &()).await.unwrap();
-        let players: HashMap<String, Player> = res
+        let mut players: HashMap<String, Player> = res
             .into_iter()
             .map(|db_player| {
                 let player =
@@ -51,6 +61,17 @@ impl Game {
                 (db_player.username, player)
             })
             .collect();
+
+        // insert admin into hashmap if it doesn't exist
+        // if !players.contains_key("admin") {
+        //     let player = Player::new(a_username.to_string(), a_jwt.clone());
+        //     players.insert(a_username.clone(), player);
+        //     // insert the admin into the db as well
+        //     let query = format!("insert Player {{username := '{}', password := '{}'}}", a_username, a_jwt);
+
+        //     let _result: Vec<DbPlayer2> = db.query(query, &()).await.unwrap();
+        // }
+
 
         Game {
             state: GameState::Lobby,
@@ -163,3 +184,4 @@ impl Game {
         None
     }
 }
+

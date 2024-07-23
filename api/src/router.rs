@@ -35,7 +35,7 @@ pub fn router() -> Router {
         )
         .route(
             "/teams",
-            get(teams::getall).layer(middleware::from_fn(auth::middleware)),
+            get(teams::getall),
         )
         .route("/convert", get(location::convert))
         .route("/ws", get(socket::handler))
