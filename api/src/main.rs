@@ -1,5 +1,5 @@
 mod auth;
-mod config;
+mod db;
 mod game;
 mod location;
 mod logging;
@@ -9,9 +9,7 @@ mod socket;
 mod teams;
 mod timer;
 
-use axum::{
-    extract::Extension, http::StatusCode, middleware, response::IntoResponse, Json,
-};
+use axum::{extract::Extension, http::StatusCode, middleware, response::IntoResponse, Json};
 use serde_json::json;
 
 use std::sync::Arc;
@@ -40,42 +38,6 @@ pub async fn axum(
 
     Ok(app.into())
 }
-
-// #[tokio::main]
-// async fn main() {
-//     logging::init();
-//     let game = Game::new().await; // do later
-
-//     // address to host on
-//     // TODO! make config customizable
-//     let addr: SocketAddr = game
-//         .config
-//         .address
-//         .parse()
-//         .expect("invalid config server address");
-
-//     let app = Router::new()
-//         .route(
-//             "/",
-//             get(|| async { format!("City Runners, version {} \n", env!("CARGO_PKG_VERSION")) }),
-//         ) // initial check for the frontend.
-//         .route("/location", post(location::recieve))
-//         .route("/login", post(auth::login))
-//         .route("/validate", get(validate_token).layer(middleware::from_fn(auth::middleware)))
-//         .route("/ws", get(socket::handler).layer(middleware::from_fn(auth::middleware)))
-//         .layer(Extension(Arc::new(RwLock::new(game))))
-//         .layer(
-//             // a layer on the router so that it can trace all requests and responses for debugging.
-//             TraceLayer::new_for_http()
-//                 .make_span_with(DefaultMakeSpan::default().include_headers(true)),
-//         );
-
-//     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-
-//     tracing::info!("listening on {}", listener.local_addr().unwrap());
-
-//     axum::serve(listener, app).await.unwrap(); // serve the api
-// }
 
 async fn validate_token(Extension(username): Extension<String>) -> impl IntoResponse {
     (StatusCode::OK, Json(json!({"username": username})))

@@ -33,10 +33,7 @@ pub fn router() -> Router {
             "/teams/:name",
             patch(teams::update_team_name).layer(middleware::from_fn(auth::middleware)),
         )
-        .route(
-            "/teams",
-            get(teams::getall),
-        )
+        .route("/teams", get(teams::getall))
         .route("/convert", get(location::convert))
         .route("/ws", get(socket::handler))
         .route(

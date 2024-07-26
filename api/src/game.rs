@@ -1,10 +1,7 @@
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{collections::HashMap, time::Duration};
 
-use crate::{auth, config::Config, player::Player, socket::Tx, teams::Team, timer::Timer};
+use crate::{auth, db::Db, player::Player, socket::Tx, teams::Team, timer::Timer};
 use axum::extract::ws::Message;
-use edgedb_tokio::{Builder, Client, Queryable};
-use serde::{Deserialize, Serialize};
-use tokio::{sync::RwLock, time};
 
 pub enum GameState {
     Lobby,     // Allow players to join and get ready
@@ -15,8 +12,7 @@ pub enum GameState {
 
 pub struct Game {
     pub state: GameState,
-    pub config: Config,
-    pub db: Client,
+    pub db: Db,
     pub timer: Option<Timer>,
     pub players: HashMap<String, Player>,
     pub teams: Vec<Team>,
@@ -25,59 +21,12 @@ pub struct Game {
 
 impl Game {
     pub async fn new(db_inst: &str, secret: &str) -> Self {
-        let db = Client::new(
-            &Builder::new()
-                .secret_key(secret)
-                .instance(db_inst)
-                .expect("invalid secrets")
-                .build_env()
-                .await
-                .unwrap(),
-        );
-
-        db.ensure_connected().await.unwrap();
-        let a_username = "umnotfuckingdefault".to_string();
-        let a_jwt = auth::jwt(&a_username);
-
-
-        #[derive(Queryable, Serialize)]
-        struct DbPlayer {
-            username: String,
-        }
-
-        #[derive(Queryable, Deserialize, Serialize)]
-        struct DbPlayer2 {
-            id: String,
-        }
-
-
-        let query = "select Player {username}";
-        let res: Vec<DbPlayer> = db.query(query, &()).await.unwrap();
-        let mut players: HashMap<String, Player> = res
-            .into_iter()
-            .map(|db_player| {
-                let player =
-                    Player::new(db_player.username.clone(), auth::jwt(&db_player.username));
-                (db_player.username, player)
-            })
-            .collect();
-
-        // insert admin into hashmap if it doesn't exist
-        // if !players.contains_key("admin") {
-        //     let player = Player::new(a_username.to_string(), a_jwt.clone());
-        //     players.insert(a_username.clone(), player);
-        //     // insert the admin into the db as well
-        //     let query = format!("insert Player {{username := '{}', password := '{}'}}", a_username, a_jwt);
-
-        //     let _result: Vec<DbPlayer2> = db.query(query, &()).await.unwrap();
-        // }
-
+        let db = Db::new(db_inst, secret).await;
 
         Game {
             state: GameState::Lobby,
-            config: Config::init(),
+            players: db.init().await,
             db,
-            players,
             teams: Vec::new(),
             connections: HashMap::new(),
             timer: None,
@@ -184,4 +133,3 @@ impl Game {
         None
     }
 }
-

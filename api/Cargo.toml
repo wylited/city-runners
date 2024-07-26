@@ -21,8 +21,8 @@ jsonwebtoken = "9.3.0"
 petgraph = { version = "0.6.5", features = ["serde", "serde_derive"] }
 serde = { version = "1.0.202", features = ["derive"] }
 serde_json = "1.0.117"
-shuttle-axum = "0.46.0"
-shuttle-runtime = "0.46.0"
+shuttle-axum = "0.47.0"
+shuttle-runtime = "0.47.0"
 tokio = { version = "1.37.0", features = ["full", "sync", "time"] }
 tokio-tungstenite = "0.21.0"
 tower = { version = "0.4.13", features = ["util"] }

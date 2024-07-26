@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use tokio::sync::RwLock;
 use tracing::info;
-use futures::future;
 
 use crate::game::Game;
 
@@ -56,9 +55,7 @@ impl Team {
     }
 }
 
-pub async fn getall(
-    Extension(game): Extension<Arc<RwLock<Game>>>,
-) -> impl IntoResponse {
+pub async fn getall(Extension(game): Extension<Arc<RwLock<Game>>>) -> impl IntoResponse {
     let game = game.read().await;
     let mut teams = game.get_teams();
     // modify teams asyncly to add a player count and for each player, their ready status
@@ -66,7 +63,7 @@ pub async fn getall(
     for team in teams.iter_mut() {
         let mut players = Vec::new();
         for player in team.players.iter() {
-            let gameplayer = game.get_player(&player).await;
+            let gameplayer = game.get_player(player).await;
             if let Ok(player) = gameplayer {
                 players.push(format!("{} (ready?: {})", player.username, player.ready));
             } else {

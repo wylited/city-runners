@@ -37,26 +37,28 @@ pub async fn login(
         .read()
         .await
         .db
+        .db
         .query_single(query, &(payload.username.clone(),))
         .await;
 
     if let Ok(Some(player)) = res {
-        if verify(&payload.password, &player.password).unwrap_or(false) {
-            let token = jwt(&payload.username);
-            {
-                let mut game_write = game.write().await;
-                if let Some(player) = game_write.players.get_mut(&payload.username) {
-                    player.token.clone_from(&token);
+        match verify(&payload.password, &player.password) {
+            Ok(true) => {
+                let token = jwt(&payload.username);
+                {
+                    let mut game_write = game.write().await;
+                    if let Some(player) = game_write.players.get_mut(&payload.username) {
+                        player.token.clone_from(&token);
+                    }
                 }
-            }
 
-            (StatusCode::ACCEPTED, Json(json!({"token": token}))).into_response()
-        } else {
-            (
+                (StatusCode::ACCEPTED, Json(json!({"token": token}))).into_response()
+            }
+            _ => (
                 StatusCode::UNAUTHORIZED,
                 Json(json!({"error": "Invalid password"})),
             )
-                .into_response()
+                .into_response(),
         }
     } else if res.is_ok() {
         let hashed_password = hash(&payload.password, DEFAULT_COST).unwrap();
@@ -64,6 +66,7 @@ pub async fn login(
         if game
             .read()
             .await
+            .db
             .db
             .execute(query, &(payload.username.clone(), hashed_password))
             .await
