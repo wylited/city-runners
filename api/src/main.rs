@@ -7,7 +7,6 @@ mod player;
 mod router;
 mod socket;
 mod teams;
-mod timer;
 
 use axum::{extract::Extension, http::StatusCode, middleware, response::IntoResponse, Json};
 use serde_json::json;

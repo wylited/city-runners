@@ -7,10 +7,10 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use bcrypt::{hash, verify, DEFAULT_COST};
-use chrono::Utc;
+use chrono::{Datelike, Duration, TimeZone, Utc};
 use edgedb_tokio::Queryable;
 use headers::{authorization::Bearer, Authorization};
-use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation, TokenData};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::sync::Arc;
@@ -20,12 +20,14 @@ use tokio::sync::RwLock;
 pub struct Player {
     username: String,
     password: String,
+    admin: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AuthClaims {
     pub sub: String,
     pub exp: usize,
+    pub admin: bool,
 }
 
 pub async fn login(
@@ -37,9 +39,9 @@ pub async fn login(
         .read()
         .await
         .db
-        .db
+        .0
         .query_single(query, &(payload.username.clone(),))
-        .await;
+        .await; // TODO Simplify this into the DB.
 
     if let Ok(Some(player)) = res {
         match verify(&payload.password, &player.password) {
@@ -57,8 +59,7 @@ pub async fn login(
             _ => (
                 StatusCode::UNAUTHORIZED,
                 Json(json!({"error": "Invalid password"})),
-            )
-                .into_response(),
+            ).into_response(),
         }
     } else if res.is_ok() {
         let hashed_password = hash(&payload.password, DEFAULT_COST).unwrap();
@@ -67,7 +68,7 @@ pub async fn login(
             .read()
             .await
             .db
-            .db
+            .0
             .execute(query, &(payload.username.clone(), hashed_password))
             .await
             .is_err()
@@ -79,35 +80,53 @@ pub async fn login(
                 .into_response();
         }
         let token = jwt(&payload.username);
-        {
-            let mut game_write = game.write().await;
-            game_write.players.insert(
-                payload.username.clone(),
-                player::Player::new(payload.username.clone(), token.clone()),
-            );
-        }
+        let mut game_write = game.write().await;
+        game_write.players.insert(
+            payload.username.clone(),
+            player::Player::new(payload.username.clone(), token.clone()),
+        );
         return (StatusCode::ACCEPTED, Json(json!({"token": token}))).into_response();
     } else {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({"error":"Server error"})),
-        )
-            .into_response();
+        ).into_response();
     }
 }
 
 pub fn jwt(username: &str) -> String {
-    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "lasecret".to_string()); // TODO: Make this a config variable or understand what environment is
+    let secret = match std::env::var("JWT_SECRET") {
+        Ok(secret) => secret,
+        Err(_) => "defaultsecret".to_string(),
+    };
+    let admin = match std::env::var("ADMIN_USERNAME") {
+        Ok(admin) => admin == username,
+        Err(_) => "admin" == username,
+    };
+
     let claims = AuthClaims {
         sub: username.to_owned(),
         exp: (chrono::Utc::now() + chrono::Duration::hours(24)).timestamp() as usize, // expires 24 hours later
+        admin,
     };
-    encode(
+
+    match encode(
         &Header::new(Algorithm::HS256),
         &claims,
         &EncodingKey::from_secret(secret.as_ref()),
-    )
-    .unwrap()
+    ) {
+        Ok(token) => token,
+        Err(_) => panic!("Failed to encode JWT"),
+    }
+}
+
+pub fn validate(token: &str) -> Result<TokenData<AuthClaims>, jsonwebtoken::errors::Error> {
+    let secret = match std::env::var("JWT_SECRET") {
+        Ok(secret) => secret,
+        Err(_) => "defaultsecret".to_string(),
+    };
+    let validation = Validation::new(Algorithm::HS256);
+    decode::<AuthClaims>(token, &DecodingKey::from_secret(secret.as_ref()), &validation)
 }
 
 pub async fn authenticate(
@@ -125,6 +144,7 @@ pub async fn authenticate(
         })
 }
 
+
 pub async fn middleware(
     Extension(game): Extension<Arc<RwLock<Game>>>,
     TypedHeader(Authorization(bearer)): TypedHeader<Authorization<Bearer>>,
@@ -132,23 +152,18 @@ pub async fn middleware(
     next: Next,
 ) -> impl IntoResponse {
     let token = bearer.token();
-    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "lasecret".to_string());
 
-    if let Ok(token_data) = decode::<AuthClaims>(
-        token,
-        &DecodingKey::from_secret(secret.as_ref()),
-        &Validation::new(jsonwebtoken::Algorithm::HS256),
-    ) {
-        let claims = token_data.claims;
-        let username = &claims.sub;
-        if authenticate(claims.exp, &claims.sub, token, game).await {
+    match validate(token) {
+        Ok(token_data) => {
+            let claims = token_data.claims;
+            let username = &claims.sub;
+            if (chrono::Utc::now().timestamp() as usize) > claims.exp {
+                return (StatusCode::UNAUTHORIZED, "Token expired".to_string()).into_response();
+            }
             let mut req = req;
             req.extensions_mut().insert(username.to_string());
             next.run(req).await.into_response()
-        } else {
-            (StatusCode::UNAUTHORIZED, "Unauthorized".to_string()).into_response()
         }
-    } else {
-        (StatusCode::UNAUTHORIZED, "Invalid token".to_string()).into_response()
+        Err(_) => (StatusCode::UNAUTHORIZED, "Invalid token".to_string()).into_response(),
     }
 }
