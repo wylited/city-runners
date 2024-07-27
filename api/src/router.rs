@@ -40,8 +40,4 @@ pub fn router() -> Router {
             "/ready",
             post(player::ready).layer(middleware::from_fn(auth::middleware)),
         )
-        .route(
-            "/timer",
-            get(timer::get).layer(middleware::from_fn(auth::middleware)),
-        )
 }
