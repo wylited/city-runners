@@ -6,9 +6,7 @@ use edgedb_tokio::{Builder, Client};
 use crate::{auth, player::Player};
 
 //
-pub struct Db {
-    pub db: Client,
-}
+pub struct Db(pub Client);
 
 impl Db {
     pub async fn new(db_inst: &str, secret: &str) -> Db {
@@ -23,13 +21,13 @@ impl Db {
         );
 
         db.ensure_connected().await.unwrap(); // blocks until the db is initialized
-        Db { db }
+        Db(db)
     }
 
     // Initializes a list of players from the database, username key.
     pub async fn init(&self) -> HashMap<String, Player> {
         const GET_USERS: &str = "select Player {username}";
-        let players: Vec<Value> = self.db.query(GET_USERS, &()).await.unwrap();
+        let players: Vec<Value> = self.0.query(GET_USERS, &()).await.unwrap();
 
         // the output will look like
         // {
