@@ -1,6 +1,6 @@
 use std::{collections::HashMap, time::Duration};
 
-use crate::{auth, db::Db, player::Player, socket::Tx, teams::Team};
+use crate::{auth, db::Db, graph::Graph, player::Player, socket::Tx, teams::Team};
 use axum::extract::ws::Message;
 
 pub enum GameState {
@@ -16,6 +16,7 @@ pub struct Game {
     pub players: HashMap<String, Player>,
     pub teams: Vec<Team>,
     pub connections: HashMap<String, Tx>, //username agains string
+    pub graph: Graph,
 }
 
 impl Game {
@@ -28,6 +29,7 @@ impl Game {
             db,
             teams: Vec::new(),
             connections: HashMap::new(),
+            graph: Graph::new(),
         }
     }
 
