@@ -1,16 +1,19 @@
+use axum::response::IntoResponse;
+use axum::{Extension, Json};
 use serde::Serializer;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 use std::ops::Add;
 use std::str::FromStr;
+use std::sync::Arc;
+use tokio::sync::RwLock;
+
+use crate::game::Game;
 
 // MTR Station
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Station {
     pub code: Code,
-    pub id: u32,
     pub name: String,
     pub latitude: f64,
     pub longitude: f64,
@@ -38,9 +41,16 @@ impl PartialEq<&str> for Station {
     }
 }
 
+// Trait so that the Station type can be hashed according to its Code
+impl Hash for Station {
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
+        hasher.write(self.code.to_string().as_bytes());
+    }
+}
+
 // A Code, made up of 3 characters.
-#[derive(Debug, Deserialize, Copy, Clone, Eq, Hash)]
-pub struct Code(char, char, char);
+#[derive(Debug, Deserialize, Copy, Clone, Eq)]
+pub struct Code(pub char, pub char, pub char);
 
 impl Serialize for Code {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -56,11 +66,11 @@ impl FromStr for Code {
 
     fn from_str(code: &str) -> Result<Self, Self::Err> {
         let code = code.chars().collect::<Vec<char>>();
-        return if code.len() != 3 {
+        if code.len() != 3 {
             Err(())
         } else {
             Ok(Self(code[0], code[1], code[2]))
-        };
+        }
     }
 }
 
@@ -104,9 +114,16 @@ impl PartialEq<&str> for Code {
     }
 }
 
+// Trait to hash a Code
+impl Hash for Code {
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
+        hasher.write(self.to_string().as_bytes());
+    }
+}
+
 // Station code 1, Station code 2, Distance in minutes
 #[derive(Debug, Deserialize, Serialize, Copy, Clone, Eq)]
-pub struct Connection(Code, Code, usize);
+pub struct Connection(pub Code, pub Code, pub usize);
 
 // trait to compare connections
 impl PartialEq for Connection {
@@ -135,4 +152,10 @@ impl Hash for Connection {
     fn hash<H: Hasher>(&self, hasher: &mut H) {
         hasher.write((self.0 + self.1).to_string().as_bytes());
     }
+}
+
+// a handler to return the json of all stations
+
+pub async fn get(Extension(game): Extension<Arc<RwLock<Game>>>) -> impl IntoResponse {
+    Json(serde_json::to_string(&game.read().await.graph.stations).unwrap_or_else(|_| "error occured".to_string()))
 }

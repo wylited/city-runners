@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Duration};
+use std::{collections::HashMap};
 
 use crate::{auth, db::Db, graph::Graph, player::Player, socket::Tx, teams::Team};
 use axum::extract::ws::Message;
@@ -29,7 +29,7 @@ impl Game {
             db,
             teams: Vec::new(),
             connections: HashMap::new(),
-            graph: Graph::new(),
+            graph: Graph::from_csv(),
         }
     }
 

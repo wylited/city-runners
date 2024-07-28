@@ -19,7 +19,7 @@ use serde_json::json;
 use tokio::sync::RwLock;
 
 use crate::{
-    auth::{self, AuthClaims},
+    auth::{self, validate, AuthClaims},
     game::Game,
     location::handle_location_op,
 };
@@ -40,38 +40,30 @@ pub async fn handler(
     ws: WebSocketUpgrade,
     Query(params): Query<QueryParams>,
     Extension(game): Extension<Arc<RwLock<Game>>>,
-) -> Response {
+) -> impl IntoResponse {
     let token = params.token;
-    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "lasecret".to_string());
 
-    return match decode::<AuthClaims>(
-        &token,
-        &DecodingKey::from_secret(secret.as_ref()),
-        &Validation::new(jsonwebtoken::Algorithm::HS256),
-    ) {
+    return match validate(&token) {
         Ok(token_data) => {
             let claims = token_data.claims;
             let username = claims.sub;
-            if auth::authenticate(claims.exp, &username, &token, game.clone()).await
-                && !game.read().await.players[&username].connected
-            {
-                {
-                    game.write()
-                        .await
-                        .players
-                        .get_mut(&username)
-                        .unwrap()
-                        .connected = true;
-                }
-
-                return ws
-                    .on_upgrade(move |socket| websocket(socket, username, game))
-                    .into_response();
-            } else {
-                return (StatusCode::UNAUTHORIZED, "Unauthorized".to_string()).into_response();
+            if !auth::authenticate(claims.exp, &username, &token, game.clone()).await {
+                return (StatusCode::UNAUTHORIZED, "Unauthorized".to_string()).into_response()
+            } else if game.read().await.players[&username].connected {
+                return (StatusCode::CONFLICT, "Already connected".to_string()).into_response()
             }
+
+            game.write()
+                .await
+                .players
+                .get_mut(&username)
+                .unwrap()
+                .connected = true;
+
+            ws.on_upgrade(move |socket| websocket(socket, username, game))
+              .into_response()
         }
-        Err(_) => (StatusCode::UNAUTHORIZED, "Invalid token".to_string()).into_response(),
+        _ => (StatusCode::UNAUTHORIZED, "Invalid token".to_string()).into_response(),
     };
 }
 

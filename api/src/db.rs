@@ -48,7 +48,7 @@ impl Db {
                     _ => panic!("Player is not an object"),
                 };
 
-                let username = match fields.get(0) {
+                let username = match fields.first() {
                     Some(Some(Value::Str(username))) => username,
                     _ => panic!("Username is not a string"),
                 };
