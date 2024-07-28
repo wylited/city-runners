@@ -7,7 +7,7 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use bcrypt::{hash, verify, DEFAULT_COST};
-use chrono::{Datelike, Duration, TimeZone, Utc};
+use chrono::{TimeZone, Utc};
 use edgedb_tokio::Queryable;
 use headers::{authorization::Bearer, Authorization};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation, TokenData};
@@ -99,6 +99,7 @@ pub fn jwt(username: &str) -> String {
         Ok(secret) => secret,
         Err(_) => "defaultsecret".to_string(),
     };
+
     let admin = match std::env::var("ADMIN_USERNAME") {
         Ok(admin) => admin == username,
         Err(_) => "admin" == username,
@@ -146,7 +147,6 @@ pub async fn authenticate(
 
 
 pub async fn middleware(
-    Extension(game): Extension<Arc<RwLock<Game>>>,
     TypedHeader(Authorization(bearer)): TypedHeader<Authorization<Bearer>>,
     req: Request,
     next: Next,
