@@ -6,20 +6,19 @@ use axum::{
         Query, WebSocketUpgrade,
     },
     http::StatusCode,
-    response::{IntoResponse, Response},
+    response::{IntoResponse},
     Extension,
 };
 use futures::{
     sink::SinkExt,
     stream::{SplitSink, SplitStream, StreamExt},
 };
-use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use tokio::sync::RwLock;
 
 use crate::{
-    auth::{self, validate, AuthClaims},
+    auth::{self, validate},
     game::Game,
     location::handle_location_op,
 };

@@ -9,12 +9,11 @@ mod socket;
 mod teams;
 mod station;
 mod graph;
+mod states;
 
 use axum::{extract::Extension, http::StatusCode, middleware, response::IntoResponse, Json};
 use serde_json::json;
 
-use std::sync::Arc;
-use tokio::sync::RwLock;
 
 use crate::{game::Game, router::router};
 
@@ -29,7 +28,7 @@ pub async fn axum(
     )
     .await;
 
-    let app = router().layer(Extension(Arc::new(RwLock::new(game))));
+    let app = router().layer(Extension(game));
 
     // .layer(
     //     // a layer on the router so that it can trace all requests and responses for debugging.

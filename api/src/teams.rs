@@ -7,7 +7,7 @@ use serde_json::json;
 use tokio::sync::RwLock;
 use tracing::info;
 
-use crate::game::Game;
+use crate::{game::Game, location::Location};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum TeamType {
@@ -21,6 +21,7 @@ pub struct Team {
     pub name: String,
     pub players: Vec<String>,
     pub ttype: TeamType,
+    pub location: Option<Location>
 }
 
 impl PartialEq for Team {
@@ -35,6 +36,7 @@ impl Team {
             name,
             players: Vec::new(),
             ttype: TeamType::Spectator,
+            location: None,
         }
     }
 
@@ -62,7 +64,7 @@ pub async fn getall(Extension(game): Extension<Arc<RwLock<Game>>>) -> impl IntoR
 
     for team in teams.iter_mut() {
         let mut players = Vec::new();
-        for player in team.players.iter() {
+        for player in team.1.players.iter() {
             let gameplayer = game.get_player(player).await;
             if let Ok(player) = gameplayer {
                 players.push(format!("{} (ready?: {})", player.username, player.ready));
@@ -70,7 +72,7 @@ pub async fn getall(Extension(game): Extension<Arc<RwLock<Game>>>) -> impl IntoR
                 players.push(format!("{} (unknown)", player));
             }
         }
-        team.players = players;
+        team.1.players = players;
     }
 
     info!("user req teams");
