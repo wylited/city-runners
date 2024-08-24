@@ -28,8 +28,10 @@ impl Game {
             graph: Graph::from_csv(),
         }));
 
-        let runner = game.clone();
-        Game::run_state(runner).await;
+       // let runner = game.clone();
+       //  tokio::spawn(async move {
+       //      Game::run_state(runner).await;
+       //  });
         game
     }
 

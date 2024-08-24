@@ -1,0 +1,176 @@
+[38;5;10m[1m    Building[0m /home/wyli/Repos/city-runners/api
+[0m[1m[33mwarning[0m[0m[1m: unused import: `auth`[0m
+[0m [0m[0m[1m[38;5;12m--> [0m[0msrc/game.rs:3:13[0m
+[0m  [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m3[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0muse crate::{auth, db::Db, graph::Graph, player::Player, socket::Tx, states::{GameState, Lobby, State}, teams::Team};[0m
+[0m  [0m[0m[1m[38;5;12m| [0m[0m            [0m[0m[1m[33m^^^^[0m
+[0m  [0m[0m[1m[38;5;12m|[0m
+[0m  [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: `#[warn(unused_imports)]` on by default[0m
+
+[0m[1m[33mwarning[0m[0m[1m: unused variable: `game`[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/states.rs:40:30[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m40[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    async fn on_enter(&self, game: Arc<RwLock<Game>>) {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m                             [0m[0m[1m[33m^^^^[0m[0m [0m[0m[1m[33mhelp: if this is intentional, prefix it with an underscore: `_game`[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m   [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: `#[warn(unused_variables)]` on by default[0m
+
+[0m[1m[33mwarning[0m[0m[1m: unused variable: `game`[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/states.rs:50:30[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m50[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    async fn on_enter(&self, game: Arc<RwLock<Game>>) {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m                             [0m[0m[1m[33m^^^^[0m[0m [0m[0m[1m[33mhelp: if this is intentional, prefix it with an underscore: `_game`[0m
+
+[0m[1m[33mwarning[0m[0m[1m: unused variable: `game`[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/states.rs:64:30[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m64[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    async fn on_enter(&self, game: Arc<RwLock<Game>>) {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m                             [0m[0m[1m[33m^^^^[0m[0m [0m[0m[1m[33mhelp: if this is intentional, prefix it with an underscore: `_game`[0m
+
+[0m[1m[33mwarning[0m[0m[1m: unused variable: `game`[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/states.rs:79:30[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m79[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    async fn on_enter(&self, game: Arc<RwLock<Game>>) {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m                             [0m[0m[1m[33m^^^^[0m[0m [0m[0m[1m[33mhelp: if this is intentional, prefix it with an underscore: `_game`[0m
+
+[0m[1m[33mwarning[0m[0m[1m: unused variable: `game`[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/states.rs:44:30[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m44[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    async fn tick(&mut self, game: Arc<RwLock<Game>>) -> GameState {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m                             [0m[0m[1m[33m^^^^[0m[0m [0m[0m[1m[33mhelp: if this is intentional, prefix it with an underscore: `_game`[0m
+
+[0m[1m[33mwarning[0m[0m[1m: unused variable: `game`[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/states.rs:54:30[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m54[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    async fn tick(&mut self, game: Arc<RwLock<Game>>) -> GameState {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m                             [0m[0m[1m[33m^^^^[0m[0m [0m[0m[1m[33mhelp: if this is intentional, prefix it with an underscore: `_game`[0m
+
+[0m[1m[33mwarning[0m[0m[1m: unused variable: `game`[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/states.rs:69:30[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m69[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    async fn tick(&mut self, game: Arc<RwLock<Game>>) -> GameState {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m                             [0m[0m[1m[33m^^^^[0m[0m [0m[0m[1m[33mhelp: if this is intentional, prefix it with an underscore: `_game`[0m
+
+[0m[1m[33mwarning[0m[0m[1m: unused variable: `game`[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/states.rs:84:30[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m84[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    async fn tick(&mut self, game: Arc<RwLock<Game>>) -> GameState {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m                             [0m[0m[1m[33m^^^^[0m[0m [0m[0m[1m[33mhelp: if this is intentional, prefix it with an underscore: `_game`[0m
+
+[0m[1m[33mwarning[0m[0m[1m: unused import: `TimeZone`[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/auth.rs:10:14[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m10[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0muse chrono::{TimeZone, Utc};[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m             [0m[0m[1m[33m^^^^^^^^[0m
+
+[0m[1m[33mwarning[0m[0m[1m: method `remove_player` is never used[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0msrc/game.rs:114:18[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m17[0m[0m  [0m[0m[1m[38;5;12m|[0m[0m [0m[0mimpl Game {[0m
+[0m    [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;12m---------[0m[0m [0m[0m[1m[38;5;12mmethod in this implementation[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m114[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    pub async fn remove_player(&mut self, username: &str) -> Result<(), String> {[0m
+[0m    [0m[0m[1m[38;5;12m| [0m[0m                 [0m[0m[1m[33m^^^^^^^^^^^^^[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m    [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: `#[warn(dead_code)]` on by default[0m
+
+[0m[1m[33mwarning[0m[0m[1m: associated function `now` is never used[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/location.rs:26:12[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m17[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mimpl Location {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;12m-------------[0m[0m [0m[0m[1m[38;5;12massociated function in this implementation[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m26[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    pub fn now(latitude: f64, longitude: f64) -> Self {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m           [0m[0m[1m[33m^^^[0m
+
+[0m[1m[33mwarning[0m[0m[1m: struct `MTR` is never constructed[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/location.rs:75:8[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m75[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mstruct MTR {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m       [0m[0m[1m[33m^^^[0m
+
+[0m[1m[33mwarning[0m[0m[1m: function `init` is never used[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/logging.rs:11:8[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m11[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub fn init() {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m       [0m[0m[1m[33m^^^^[0m
+
+[0m[1m[33mwarning[0m[0m[1m: variants `Hider`, `SecondarySeeker`, `PrimarySeeker`, and `Admin` are never constructed[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/player.rs:15:5[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m14[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mpub enum PlayerType {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m         [0m[0m[1m[38;5;12m----------[0m[0m [0m[0m[1m[38;5;12mvariants in this enum[0m
+[0m[1m[38;5;12m15[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    Hider,[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m    [0m[0m[1m[33m^^^^^[0m
+[0m[1m[38;5;12m16[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    SecondarySeeker,[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m    [0m[0m[1m[33m^^^^^^^^^^^^^^^[0m
+[0m[1m[38;5;12m17[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    PrimarySeeker,[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m    [0m[0m[1m[33m^^^^^^^^^^^^^[0m
+[0m[1m[38;5;12m18[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    Admin,[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m    [0m[0m[1m[33m^^^^^[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m   [0m[0m[1m[38;5;12m= [0m[0m[1mnote[0m[0m: `PlayerType` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis[0m
+
+[0m[1m[33mwarning[0m[0m[1m: methods `update_token` and `update_connection` are never used[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/player.rs:48:12[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m34[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mimpl Player {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;12m-----------[0m[0m [0m[0m[1m[38;5;12mmethods in this implementation[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m48[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    pub fn update_token(&mut self, token: String) {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m           [0m[0m[1m[33m^^^^^^^^^^^^[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m58[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    pub fn update_connection(&mut self, connected: bool) {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m           [0m[0m[1m[33m^^^^^^^^^^^^^^^^^[0m
+
+[0m[1m[33mwarning[0m[0m[1m: method `update_type` is never used[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/teams.rs:55:12[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m33[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mimpl Team {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;12m---------[0m[0m [0m[0m[1m[38;5;12mmethod in this implementation[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m55[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    pub fn update_type(&mut self, ttype: TeamType) {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m           [0m[0m[1m[33m^^^^^^^^^^^[0m
+
+[0m[1m[33mwarning[0m[0m[1m: associated functions `blank` and `from_ron` are never used[0m
+[0m  [0m[0m[1m[38;5;12m--> [0m[0msrc/graph.rs:11:12[0m
+[0m   [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m10[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mimpl Graph {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m[1m[38;5;12m----------[0m[0m [0m[0m[1m[38;5;12massociated functions in this implementation[0m
+[0m[1m[38;5;12m11[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    pub fn blank() -> Self {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m           [0m[0m[1m[33m^^^^^[0m
+[0m[1m[38;5;12m...[0m
+[0m[1m[38;5;12m77[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0m    pub fn from_ron() -> Self {[0m
+[0m   [0m[0m[1m[38;5;12m| [0m[0m           [0m[0m[1m[33m^^^^^^^^[0m
+
+[0m[1m[33mwarning[0m[0m[1m: constant `STATIONS` is never used[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0msrc/graph.rs:226:7[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m226[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mconst STATIONS: &str = r#"[0m
+[0m    [0m[0m[1m[38;5;12m| [0m[0m      [0m[0m[1m[33m^^^^^^^^[0m
+
+[0m[1m[33mwarning[0m[0m[1m: constant `CONNECTIONS` is never used[0m
+[0m   [0m[0m[1m[38;5;12m--> [0m[0msrc/graph.rs:991:7[0m
+[0m    [0m[0m[1m[38;5;12m|[0m
+[0m[1m[38;5;12m991[0m[0m [0m[0m[1m[38;5;12m|[0m[0m [0m[0mconst CONNECTIONS: &str = r#"[0m
+[0m    [0m[0m[1m[38;5;12m| [0m[0m      [0m[0m[1m[33m^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m:[0m `api` (bin "api") generated 20 warnings (run `cargo fix --bin "api"` to apply 1 suggestion)
+[1m[32m    Finished[0m ]8;;https://doc.rust-lang.org/cargo/reference/profiles.html#default-profiles\`dev` profile [unoptimized + debuginfo]]8;;\ target(s) in 0.38s
+[2m2024-08-24T16:49:29.560+08:00[0m [Runtime] shuttle-runtime 0.47.0 executable started
+[2m2024-08-24T16:49:29.560+08:00[0m [Runtime] [33mShuttle's default tracing subscriber is initialized![0m
+[2m2024-08-24T16:49:29.560+08:00[0m [Runtime] To disable it and use your own, check the docs: https://docs.shuttle.rs/configuration/logs
+These secrets can be accessed by city-runners
+╭───────────────────╮
+│        Keys       │
+╞═══════════════════╡
+│ EDGEDB_INSTANCE   │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+│ EDGEDB_SECRET_KEY │
+╰───────────────────╯
+
+    [38;5;10m[1mStarting[0m city-runners on http://127.0.0.1:8000
+
+[2m2024-08-24T16:49:29.567+08:00[0m [Runtime] [32m INFO[0m [2medgedb_tokio::raw::connection[0m[2m:[0m Connecting via TCP cityrunners--wylited.c-39.i.aws.edgedb.cloud:5656    
+[2m2024-08-24T16:49:32.531+08:00[0m [Runtime] [32m INFO[0m [2mapi::states[0m[2m:[0m Entered Lobby state
+cargo-shuttle received SIGINT. Killing all the runtimes...
