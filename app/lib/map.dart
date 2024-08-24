@@ -9,7 +9,7 @@ class _MapWidgetState extends State<MapWidget> {
   double _currentScale = 1.0;
   final double _initialMarkerSize = 15.0;
   final double _imageWidth = 2238;
-  final double _imageHeight = 2049;
+  final double _imageHeight = 2048;
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +20,11 @@ class _MapWidgetState extends State<MapWidget> {
         print('Display width: $displayWidth, Display height: $displayHeight');
         double scaleX = displayWidth / _imageWidth;
         double scaleY = displayHeight / _imageHeight;
+        print('Scale X: $scaleX, Scale Y: $scaleY');
+        print('marker x: ${1975 * scaleX}, marker y: ${1809 * scaleY}');
+        double markerSize = 5;
+        double markerLeft = (635 * scaleX) - (markerSize / 2);
+        double markerTop = (645 * scaleY) - markerSize;
 
         return InteractiveViewer(
           minScale: 0.1,
@@ -35,15 +40,15 @@ class _MapWidgetState extends State<MapWidget> {
                 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Hong_Kong_Railway_Route_Map_en.svg/2238px-Hong_Kong_Railway_Route_Map_en.svg.png',
                 width: _imageWidth,
                 height: _imageHeight,
-                fit: BoxFit.cover,
+                fit: BoxFit.fitWidth,
               ),
               Positioned(
-                left: 1975 * scaleX, // X coordinate of the marker
-                top: 1809 * scaleY, // Y coordinate of the marker
+                left: markerLeft, // X coordinate of the marker
+                top: markerTop, // Y coordinate of the marker
                 child: Icon(
                   Icons.location_on,
                   color: Colors.red,
-                  size: 5,
+                  size: markerSize,
                 ),
               ),
               // Add more Positioned widgets for additional markers

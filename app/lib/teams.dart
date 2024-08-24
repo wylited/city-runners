@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'main.dart';
 import 'globals.dart' as globals;
+import 'dart:async';
 
 // Define TeamType Enum
 enum TeamType { Seeker, Hider, Spectator }
@@ -47,12 +48,14 @@ class _TeamListPageState extends State<TeamListPage> {
   List<Team> _teams = [];
   String? _currentTeam;
   bool _isReady = false;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _fetchTeams();
     _getCurrentTeam();
+    _startTimer();
   }
 
   Future<void> _fetchTeams() async {
@@ -92,9 +95,25 @@ class _TeamListPageState extends State<TeamListPage> {
     String? currentTeam;
     for (var teamJson in jsonList) {
       Team team = Team.fromJson(teamJson);
-      if (team.players.contains(globals.username)) {
-        currentTeam = team.name;
+      for (String player in team.players) {
+        // the player is written as username (readystate), so check accordingly
+        if (player.split(' ')[0] == globals.username) {
+          currentTeam = team.name;
+          break;
+        }
       }
+    }
+
+    @override
+    void dispose() {
+      _timer?.cancel();
+      super.dispose();
+    }
+
+    void _startTimer() {
+      _timer = Timer.periodic(Duration(seconds: 2), (timer) async {
+        await _fetchTeams();
+      });
     }
 
     setState(() {
@@ -298,10 +317,47 @@ class _TeamListPageState extends State<TeamListPage> {
                   backgroundColor: MaterialStateProperty.all(
                       _isReady ? Colors.green : Colors.grey),
                 ),
-                onPressed: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => HomePage()),
+                onPressed: () async {
+                  if (_currentTeam == null) {
+                    // prompt the user to join a team before readying
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: Text('Join a Team'),
+                          content: Text(
+                              'You need to join a team before you can ready up.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: Text('OK'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                    return;
+                  }
+                  setState(() {
+                    _isReady = !_isReady;
+                  });
+
+                  // send a post request to the server to set the player as ready
+
+                  String token = globals.jwt;
+
+                  final headers = {
+                    'Authorization': 'Bearer $token',
+                  };
+
+                  final response = await http.post(
+                    Uri.parse('https://${globals.server_address}/ready'),
+                    headers: headers,
                   );
+
+                  await _refreshTeams();
                 },
                 icon: Icon(Icons.check),
                 label: Text('Ready'),

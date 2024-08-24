@@ -153,10 +153,11 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
             ),
+
             const SizedBox(height: 16),
             // Adding the MapWidget to the HomePage
             SizedBox(
-              height: 400, // Adjust height as needed
+              height: (MediaQuery.of(context).size.width - 32) * (2048 / 2238),
               child: MapWidget(),
             ),
           ],
