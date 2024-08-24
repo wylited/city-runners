@@ -20,7 +20,6 @@ use tokio::sync::RwLock;
 pub struct Player {
     username: String,
     password: String,
-    admin: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -34,8 +33,16 @@ pub async fn login(
     Extension(game): Extension<Arc<RwLock<Game>>>,
     Json(payload): Json<Player>,
 ) -> impl IntoResponse {
-    let query = "select Player { username, password } filter .username = <str>$0";
-    let res: Result<Option<Player>, edgedb_tokio::Error> = game
+    let query = "select Player { username, password, admin } filter .username = <str>$0";
+
+    #[derive(Debug, Deserialize, Serialize, Queryable)]
+    pub struct DbPlayer {
+        username: String,
+        password: String,
+        admin: bool,
+    }
+
+    let res: Result<Option<DbPlayer>, edgedb_tokio::Error> = game
         .read()
         .await
         .db
@@ -43,16 +50,14 @@ pub async fn login(
         .query_single(query, &(payload.username.clone(),))
         .await; // TODO Simplify this into the DB.
 
-    if let Ok(Some(player)) = res {
+    if let Ok(Some(player)) = res { // If there is a player with the given username, log them in
         match verify(&payload.password, &player.password) {
             Ok(true) => {
-                let token = jwt(&payload.username);
-                {
+                let token = jwt(&payload.username, player.admin);
                     let mut game_write = game.write().await;
                     if let Some(player) = game_write.players.get_mut(&payload.username) {
                         player.token.clone_from(&token);
                     }
-                }
 
                 (StatusCode::ACCEPTED, Json(json!({"token": token}))).into_response()
             }
@@ -63,7 +68,7 @@ pub async fn login(
         }
     } else if res.is_ok() {
         let hashed_password = hash(&payload.password, DEFAULT_COST).unwrap();
-        let query = "insert Player { username := <str>$0, password := <str>$1 }";
+        let query = "insert Player { username := <str>$0, password := <str>$1, admin := false}";
         if game
             .read()
             .await
@@ -79,12 +84,14 @@ pub async fn login(
             )
                 .into_response();
         }
-        let token = jwt(&payload.username);
+
+        let token = jwt(&payload.username, false);
         let mut game_write = game.write().await;
         game_write.players.insert(
             payload.username.clone(),
             player::Player::new(payload.username.clone(), token.clone()),
         );
+
         return (StatusCode::ACCEPTED, Json(json!({"token": token}))).into_response();
     } else {
         return (
@@ -94,15 +101,10 @@ pub async fn login(
     }
 }
 
-pub fn jwt(username: &str) -> String {
+pub fn jwt(username: &str, admin: bool) -> String {
     let secret = match std::env::var("JWT_SECRET") {
         Ok(secret) => secret,
         Err(_) => "defaultsecret".to_string(),
-    };
-
-    let admin = match std::env::var("ADMIN_USERNAME") {
-        Ok(admin) => admin == username,
-        Err(_) => "admin" == username,
     };
 
     let claims = AuthClaims {

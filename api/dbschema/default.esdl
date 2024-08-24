@@ -6,5 +6,6 @@ module default {
                  constraint exclusive
         }
         required property password: str;
+        required property admin: bool;
     }
 }

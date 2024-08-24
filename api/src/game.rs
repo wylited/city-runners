@@ -34,9 +34,8 @@ impl Game {
     }
 
     // State Machine management
-
     pub async fn run_state(game: Arc<RwLock<Game>>) {
-        loop { // full game loop lives here
+        loop { // game loop lives here
             Game::run_state_loop(game.clone(), game.read().await.state.clone()).await;
         }
     }
@@ -88,15 +87,14 @@ impl Game {
     }
 
     // Player methods
-
-    pub async fn new_player(&mut self, username: String) -> Result<(), String> {
-        if self.players.contains_key(&username) {
-            return Err("Player already exists".to_string());
-        }
-        let player = Player::new(username.clone(), auth::jwt(&username));
-        self.players.insert(username, player);
-        Ok(())
-    }
+    // pub async fn new_player(&mut self, username: String) -> Result<(), String> {
+    //     if self.players.contains_key(&username) {
+    //         return Err("Player already exists".to_string());
+    //     }
+    //     let player = Player::new(username.clone(), auth::jwt(&username));
+    //     self.players.insert(username, player);
+    //     Ok(())
+    // }
 
     pub async fn get_player(&self, username: &str) -> Result<&Player, String> {
         if let Some(player) = self.players.get(username) {
@@ -130,7 +128,6 @@ impl Game {
     }
 
     // Broadcast to all players
-
     pub async fn broadcast(&self, msg: Message) -> Result<(), String> {
         for (_, player) in self.players.iter() {
             if player.connected {
@@ -141,7 +138,6 @@ impl Game {
     }
 
     // Team methods
-
     pub fn get_teams(&self) -> HashMap<String, Team> {
         self.teams.clone()
     }

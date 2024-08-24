@@ -53,7 +53,7 @@ impl Db {
                     _ => panic!("Username is not a string"),
                 };
 
-                let player = Player::new(username.clone(), auth::jwt(username));
+                let player = Player::new(username.clone(), auth::jwt(username, false));
                 (username.clone(), player)
             })
             .collect()
