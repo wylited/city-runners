@@ -95,7 +95,6 @@ impl Game {
     //     self.players.insert(username, player);
     //     Ok(())
     // }
-
     pub async fn get_player(&self, username: &str) -> Result<&Player, String> {
         if let Some(player) = self.players.get(username) {
             Ok(player)
