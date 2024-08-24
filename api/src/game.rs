@@ -87,6 +87,8 @@ impl Game {
     }
 
     // Player methods
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
     // pub async fn new_player(&mut self, username: String) -> Result<(), String> {
     //     if self.players.contains_key(&username) {
     //         return Err("Player already exists".to_string());
@@ -95,6 +97,18 @@ impl Game {
     //     self.players.insert(username, player);
     //     Ok(())
     // }
+=======
+=======
+>>>>>>> Stashed changes
+    pub async fn new_player(&mut self, username: String) -> Result<(), String> {
+        if self.players.contains_key(&username) {
+            return Err("Player already exists".to_string());
+        }
+        let player = Player::new(username.clone(), auth::jwt(&username));
+        self.players.insert(username, player);
+        Ok(())
+    }
+>>>>>>> Stashed changes
 
     pub async fn get_player(&self, username: &str) -> Result<&Player, String> {
         if let Some(player) = self.players.get(username) {
