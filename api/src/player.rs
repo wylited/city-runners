@@ -89,7 +89,6 @@ impl Player {
     }
 }
 
-// write a post function which will flip the player's ready status and return the new ready status
 pub async fn ready(
     Extension(game): Extension<Arc<RwLock<Game>>>,
     Extension(username): Extension<String>,

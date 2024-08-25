@@ -41,4 +41,6 @@ pub fn router() -> Router {
             post(player::ready).layer(middleware::from_fn(auth::middleware)),
         )
         .route("/stations", get(station::get))
+        .route("/state", get(state_machine::get))
+        .route("/start", post(state_machine::start))
 }

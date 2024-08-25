@@ -164,6 +164,7 @@ pub async fn middleware(
             }
             let mut req = req;
             req.extensions_mut().insert(username.to_string());
+            req.extensions_mut().insert(claims.admin);
             next.run(req).await.into_response()
         }
         Err(_) => (StatusCode::UNAUTHORIZED, "Invalid token".to_string()).into_response(),
