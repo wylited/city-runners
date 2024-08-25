@@ -23,20 +23,22 @@ impl IntoResponse for GameState {
 }
 
 pub trait State {
-    fn init();
-    fn update();
+    fn init(&mut self);
+    fn update(&mut self);
     fn new() -> Self;
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct LobbyState;
 impl State for LobbyState {
-    fn init() {
+    fn init(&mut self) {
+        println!("init Lobby state");
+    }
+
+    fn update(&mut self) {
         println!("Lobby state");
     }
-    fn update() {
-        println!("Lobby state");
-    }
+
     fn new() -> Self {
         LobbyState
     }
@@ -45,10 +47,10 @@ impl State for LobbyState {
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct HideState;
 impl State for HideState {
-    fn init() {
-        println!("Hide state");
+    fn init(&mut self) {
+        println!("init Hide state");
     }
-    fn update() {
+    fn update(&mut self) {
         println!("Hide state");
     }
     fn new() -> Self {
@@ -59,10 +61,10 @@ impl State for HideState {
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct SeekState;
 impl State for SeekState {
-    fn init() {
+    fn init(&mut self) {
         println!("Seek state");
     }
-    fn update() {
+    fn update(&mut self) {
         println!("Seek state");
     }
     fn new() -> Self {
@@ -73,10 +75,10 @@ impl State for SeekState {
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct RoundEndState;
 impl State for RoundEndState {
-    fn init() {
+    fn init(&mut self) {
         println!("RoundEnd state");
     }
-    fn update() {
+    fn update(&mut self) {
         println!("RoundEnd state");
     }
     fn new() -> Self {

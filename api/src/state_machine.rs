@@ -3,7 +3,7 @@ use std::{sync::Arc, time::Duration};
 use axum::{response::IntoResponse, Extension};
 use tokio::{sync::{mpsc, RwLock}, time::interval};
 
-use crate::{game::Game, states::{GameState, HideState, LobbyState, RoundEndState, SeekState}};
+use crate::{game::Game, states::{State, GameState, HideState, LobbyState, RoundEndState, SeekState}};
 
 pub enum Event {
     Lobby,        // switch over to Lobby state,
@@ -48,23 +48,23 @@ impl GameStateMachine {
     async fn handle_event(&mut self, event: Event) {
         match event {
             Event::Lobby => {
-                let lobby_state = LobbyState::new();
-                lobby_state.init().await;
+                let mut lobby_state = LobbyState::new();
+                lobby_state.init();
                 self.update_state(GameState::Lobby(lobby_state)).await;
             }
             Event::Hide => {
-                let hide_state = HideState::new();
-                hide_state.init().await;
+                let mut hide_state = HideState::new();
+                hide_state.init();
                 self.update_state(GameState::Hide(hide_state)).await;
             }
             Event::Seek => {
-                let seek_state = SeekState::new();
-                seek_state.init().await;
+                let mut seek_state = SeekState::new();
+                seek_state.init();
                 self.update_state(GameState::Seek(seek_state)).await;
             }
             Event::RoundEnd => {
-                let round_end_state = RoundEndState::new();
-                round_end_state.init().await;
+                let mut round_end_state = RoundEndState::new();
+                round_end_state.init();
                 self.update_state(GameState::RoundEnd(round_end_state)).await;
             }
         }
@@ -72,10 +72,10 @@ impl GameStateMachine {
     // loop code
     async fn process_state(&mut self) {
         match self.get_state().await {
-            GameState::Lobby(mut state) => {state.update()},
-            GameState::Hide(mut state) => println!("Hide Loop Code"),
-            GameState::Seek(mut state) => println!("Seek Loop Code"),
-            GameState::RoundEnd(mut state) => println!("Round End Loop Code"),
+            GameState::Lobby(mut state) => state.update(),
+            GameState::Hide(mut state) => state.update(),
+            GameState::Seek(mut state) => state.update(),
+            GameState::RoundEnd(mut state) => state.update(),
         }
     }
 

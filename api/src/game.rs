@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::{db::Db, graph::Graph, player::Player, socket::Tx, state_machine::{Event, GameStateMachine}, states::{GameState, LobbyState}, teams::Team};
+use crate::{db::Db, graph::Graph, player::Player, socket::Tx, state_machine::{Event, GameStateMachine}, states::{State, GameState, LobbyState}, teams::Team};
 use axum::{extract::ws::Message, response::IntoResponse, Extension};
 use tokio::sync::{mpsc, RwLock};
 
@@ -19,8 +19,8 @@ impl Game {
     pub async fn new(db_inst: &str, secret: &str) -> Arc<RwLock<Self>> {
         let db = Db::new(db_inst, secret).await;
         let (tx, rx) = mpsc::channel(2);
-        let lobby_state = LobbyState::new();
-        lobby_state.init().await;
+        let mut lobby_state = LobbyState::new();
+        lobby_state.init();
         let state = Arc::new(RwLock::new(GameState::Lobby(lobby_state)));
 
         let mut state_machine = GameStateMachine {
