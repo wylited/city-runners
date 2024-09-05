@@ -170,3 +170,29 @@ pub async fn middleware(
         Err(_) => (StatusCode::UNAUTHORIZED, "Invalid token".to_string()).into_response(),
     }
 }
+
+pub async fn middleware_admin(
+    TypedHeader(Authorization(bearer)): TypedHeader<Authorization<Bearer>>,
+    req: Request,
+    next: Next,
+) -> impl IntoResponse {
+    let token = bearer.token();
+
+    match validate(token) {
+        Ok(token_data) => {
+            let claims = token_data.claims;
+            let username = &claims.sub;
+            if (chrono::Utc::now().timestamp() as usize) > claims.exp {
+                return (StatusCode::UNAUTHORIZED, "Token expired".to_string()).into_response();
+            }
+            if !claims.admin {
+                return (StatusCode::UNAUTHORIZED, "Not an admin".to_string()).into_response();
+            }
+            let mut req = req;
+            req.extensions_mut().insert(username.to_string());
+            req.extensions_mut().insert(claims.admin);
+            next.run(req).await.into_response()
+        }
+        Err(_) => (StatusCode::UNAUTHORIZED, "Invalid token".to_string()).into_response(),
+    }
+}

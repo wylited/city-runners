@@ -1,9 +1,11 @@
-use std::time::Duration;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 use axum::response::{IntoResponse, Response};
-use tokio::time::{interval, Interval};
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+use crate::game::Game;
+
+#[derive(Clone)]
 pub enum GameState {
     Lobby(LobbyState),
     Hide(HideState),
@@ -23,19 +25,19 @@ impl IntoResponse for GameState {
 }
 
 pub trait State {
-    fn init(&mut self);
-    fn update(&mut self);
+    fn init(&mut self, game: Arc<RwLock<Game>>);
+    fn update(&mut self, game: Arc<RwLock<Game>>);
     fn new() -> Self;
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Clone)]
 pub struct LobbyState;
 impl State for LobbyState {
-    fn init(&mut self) {
+    fn init(&mut self, game: Arc<RwLock<Game>>) {
         println!("init Lobby state");
     }
 
-    fn update(&mut self) {
+    fn update(&mut self, game: Arc<RwLock<Game>>) {
         println!("Lobby state");
     }
 
@@ -44,13 +46,13 @@ impl State for LobbyState {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Clone)]
 pub struct HideState;
 impl State for HideState {
-    fn init(&mut self) {
+    fn init(&mut self, game: Arc<RwLock<Game>>) {
         println!("init Hide state");
     }
-    fn update(&mut self) {
+    fn update(&mut self, game: Arc<RwLock<Game>>) {
         println!("Hide state");
     }
     fn new() -> Self {
@@ -58,13 +60,13 @@ impl State for HideState {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Clone)]
 pub struct SeekState;
 impl State for SeekState {
-    fn init(&mut self) {
+    fn init(&mut self, game: Arc<RwLock<Game>>) {
         println!("Seek state");
     }
-    fn update(&mut self) {
+    fn update(&mut self, game: Arc<RwLock<Game>>) {
         println!("Seek state");
     }
     fn new() -> Self {
@@ -72,13 +74,13 @@ impl State for SeekState {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Clone)]
 pub struct RoundEndState;
 impl State for RoundEndState {
-    fn init(&mut self) {
+    fn init(&mut self, game: Arc<RwLock<Game>>) {
         println!("RoundEnd state");
     }
-    fn update(&mut self) {
+    fn update(&mut self, game: Arc<RwLock<Game>>) {
         println!("RoundEnd state");
     }
     fn new() -> Self {

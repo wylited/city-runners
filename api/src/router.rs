@@ -42,5 +42,5 @@ pub fn router() -> Router {
         )
         .route("/stations", get(station::get))
         .route("/state", get(state_machine::get))
-        .route("/start", post(state_machine::start))
+        .route("/start", post(state_machine::start).layer(middleware::from_fn(auth::middleware_admin)))
 }

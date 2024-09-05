@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::{db::Db, graph::Graph, player::Player, socket::Tx, state_machine::{Event, GameStateMachine}, states::{State, GameState, LobbyState}, teams::Team};
+use crate::{db::Db, graph::Graph, player::Player, socket::Tx, state_machine::{Event}, states::{State, GameState}, teams::Team};
 use axum::{extract::ws::Message, response::IntoResponse, Extension};
 use tokio::sync::{mpsc, RwLock};
 
@@ -16,18 +16,9 @@ pub struct Game {
 }
 
 impl Game {
-    pub async fn new(db_inst: &str, secret: &str) -> Arc<RwLock<Self>> {
+    pub async fn new(db_inst: &str, secret: &str, state: Arc<RwLock<GameState>>) -> (Arc<RwLock<Self>>, mpsc::Receiver<Event>) {
         let db = Db::new(db_inst, secret).await;
         let (tx, rx) = mpsc::channel(2);
-        let mut lobby_state = LobbyState::new();
-        lobby_state.init();
-        let state = Arc::new(RwLock::new(GameState::Lobby(lobby_state)));
-
-        let mut state_machine = GameStateMachine {
-            state: state.clone(),
-            rx,
-        };
-
 
         let game = Game {
             players: db.init().await,
@@ -40,22 +31,9 @@ impl Game {
             state,
         };
 
-        tokio::spawn(async move {
-            state_machine.run().await;
-        });
-
-        Arc::new(RwLock::new(game))
+        (Arc::new(RwLock::new(game)), rx)
     }
 
-    // Player methods
-    // pub async fn new_player(&mut self, username: String) -> Result<(), String> {
-    //     if self.players.contains_key(&username) {
-    //         return Err("Player already exists".to_string());
-    //     }
-    //     let player = Player::new(username.clone(), auth::jwt(&username));
-    //     self.players.insert(username, player);
-    //     Ok(())
-    // }
     pub async fn get_player(&self, username: &str) -> Result<&Player, String> {
         if let Some(player) = self.players.get(username) {
             Ok(player)
