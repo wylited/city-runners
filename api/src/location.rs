@@ -35,6 +35,7 @@ impl Location {
 pub async fn handle_location_op(json: &serde_json::Value, who: &str, game: &Arc<RwLock<Game>>) {
     let latitude = json.get("latitude").unwrap().as_f64().unwrap();
     let longitude = json.get("longitude").unwrap().as_f64().unwrap();
+
     game.write()
         .await
         .get_mut_player(who)
