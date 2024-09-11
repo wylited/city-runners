@@ -111,12 +111,26 @@ class _HomePageState extends State<HomePage> {
         _location = 'Lat: ${position.latitude}, Lon: ${position.longitude}';
         _logs.add('Location updated: $_location');
       });
+      final locationData = jsonEncode({
+        'latitude': position.latitude,
+        'longitude': position.longitude,
+      });
+      final uri = Uri.parse('https://${globals.server_address}/convert');
+      final response = await http.post(
+        uri,
+        body: locationData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      ); // returned value is gonna be json {"x": x, "y": y}
+      final json = jsonDecode(response.body);
+      globals.latitude = json['x'];
+      globals.longitude = json['y'];
+      setState(() {
+        _logs.add('Converted: ${globals.latitude}, ${globals.longitude}');
+      });
 
       if (_channel != null) {
-        final locationData = jsonEncode({
-          'latitude': position.latitude,
-          'longitude': position.longitude,
-        });
         _channel?.sink.add(locationData);
         setState(() {
           _logs.add('Sent: $locationData');

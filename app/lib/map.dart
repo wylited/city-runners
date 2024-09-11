@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'globals.dart' as globals;
 
 class MapWidget extends StatefulWidget {
   @override
@@ -23,8 +24,8 @@ class _MapWidgetState extends State<MapWidget> {
         print('Scale X: $scaleX, Scale Y: $scaleY');
         print('marker x: ${1975 * scaleX}, marker y: ${1809 * scaleY}');
         double markerSize = 5;
-        double markerLeft = (635 * scaleX) - (markerSize / 2);
-        double markerTop = (645 * scaleY) - markerSize;
+        double markerLeft = (globals.latitude * scaleX) - (markerSize / 2);
+        double markerTop = (globals.longitude * scaleY) - markerSize;
 
         return InteractiveViewer(
           minScale: 0.1,

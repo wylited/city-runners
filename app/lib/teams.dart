@@ -48,14 +48,12 @@ class _TeamListPageState extends State<TeamListPage> {
   List<Team> _teams = [];
   String? _currentTeam;
   bool _isReady = false;
-  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _fetchTeams();
     _getCurrentTeam();
-    _startTimer();
   }
 
   Future<void> _fetchTeams() async {
@@ -106,14 +104,7 @@ class _TeamListPageState extends State<TeamListPage> {
 
     @override
     void dispose() {
-      _timer?.cancel();
       super.dispose();
-    }
-
-    void _startTimer() {
-      _timer = Timer.periodic(Duration(seconds: 2), (timer) async {
-        await _fetchTeams();
-      });
     }
 
     setState(() {

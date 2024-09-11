@@ -167,7 +167,7 @@ class _LoginPageState extends State<LoginPage> {
                     if (token != null && await _validateToken(token)) {
                       await _saveCredentials(_username!, _password!, token);
                       Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (_) => TeamListPage()),
+                        MaterialPageRoute(builder: (_) => HomePage()),
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
