@@ -34,7 +34,7 @@ impl Game {
         (Arc::new(RwLock::new(game)), rx)
     }
 
-    pub async fn get_player(&self, username: &str) -> Result<&Player, String> {
+    pub fn get_player(&self, username: &str) -> Result<&Player, String> {
         if let Some(player) = self.players.get(username) {
             Ok(player)
         } else {
@@ -95,11 +95,4 @@ impl Game {
         self.teams.insert(team.name.clone(), team);
         Ok(())
     }
-}
-
-pub async fn start(
-    Extension(game): Extension<Arc<RwLock<Game>>>,
-    Extension(username): Extension<String>,
-    Extension(admin): Extension<bool>
-) -> impl IntoResponse {
 }

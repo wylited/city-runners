@@ -15,14 +15,17 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
- i
+
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+
+import { store } from '../store'
+import Lobby from './Lobby.vue'
 
 const formSchema = toTypedSchema(z.object({
   address: z.string().url(),
   username: z.string().min(2).max(50),
-  password: z.string().min(8).max(20),
+  password: z.string().min(2).max(20),
 }))
 
 const { handleSubmit } = useForm({
@@ -45,7 +48,9 @@ const onSubmit = handleSubmit(async (values) => {
   try {
     const token = await invoke('login', values)
     console.log('Token received:', token)
-    
+    store.token = token
+    store.username = values.username
+    store.page = Lobby;
     dialogTitle.value = 'Success'
     dialogMessage.value = 'Login successful!'
   } catch (error) {

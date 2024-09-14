@@ -36,10 +36,6 @@ pub fn router() -> Router {
         .route("/teams", get(teams::getall))
         .route("/convert", get(location::convert))
         .route("/ws", get(socket::handler))
-        .route(
-            "/ready",
-            post(player::ready).layer(middleware::from_fn(auth::middleware)),
-        )
         .route("/stations", get(station::get))
         .route("/state", get(state_machine::get))
         .route("/start", post(state_machine::start).layer(middleware::from_fn(auth::middleware_admin)))

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Login from "./components/Login.vue";
+import { store } from "./store.ts"
 import { onMounted } from 'vue'
 
 onMounted(() => {
@@ -8,13 +9,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div vaul-drawer-wrapper class="overscroll-none min-h-screen bg-background text-foreground ">
+  <div vaul-drawer-wrapper class="overscroll-none min-h-screen bg-background text-foreground">
     <div class="p-2">
-      <Login />
+      <component :is="store.page" />
     </div>
   </div>
 </template>
 
-<style scoped>
-
-</style>

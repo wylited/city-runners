@@ -7,7 +7,7 @@ use serde_json::json;
 use tokio::sync::RwLock;
 use tracing::info;
 
-use crate::{game::Game, location::Location};
+use crate::{game::Game, location::Location, player::Player};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum TeamType {
@@ -21,7 +21,8 @@ pub struct Team {
     pub name: String,
     pub players: Vec<String>,
     pub ttype: TeamType,
-    pub location: Option<Location>
+    pub ready: bool,
+    pub location: Option<Location>,
 }
 
 impl PartialEq for Team {
@@ -36,6 +37,7 @@ impl Team {
             name,
             players: Vec::new(),
             ttype: TeamType::Spectator,
+            ready: false,
             location: None,
         }
     }
@@ -46,6 +48,10 @@ impl Team {
 
     pub fn remove_player(&mut self, player: String) {
         self.players.retain(|p| p != &player);
+    }
+
+    pub fn ready(&mut self){
+        self.ready = !self.ready;
     }
 
     pub fn is_player_on_team(&self, player: &str) -> bool {
@@ -65,11 +71,11 @@ pub async fn getall(Extension(game): Extension<Arc<RwLock<Game>>>) -> impl IntoR
     for team in teams.iter_mut() {
         let mut players = Vec::new();
         for player in team.1.players.iter() {
-            let gameplayer = game.get_player(player).await;
+            let gameplayer = game.get_player(player);
             if let Ok(player) = gameplayer {
-                players.push(format!("{} (ready?: {})", player.username, player.ready));
+                players.push(format!("{}", player.username));
             } else {
-                players.push(format!("{} (unknown)", player));
+                players.push(format!("{} (invalid player)", player));
             }
         }
         team.1.players = players;

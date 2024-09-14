@@ -15,7 +15,7 @@
     "@tauri-apps/plugin-http": "^2.0.0-rc",
     "@tauri-apps/plugin-notification": "^2.0.0-rc",
     "@tauri-apps/plugin-shell": ">=2.0.0-rc.0",
-    "@tauri-apps/plugin-store": "^2.0.0-rc",
+    "@tauri-apps/plugin-store": "2.0.0-rc.1",
     "@vee-validate/zod": "^4.13.2",
     "@vueuse/core": "^11.0.3",
     "class-variance-authority": "^0.7.0",

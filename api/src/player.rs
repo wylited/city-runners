@@ -27,7 +27,6 @@ pub struct Player {
     pub ptype: PlayerType,
     pub stream: Option<Tx>,
     pub current_location: Option<Location>,
-    pub ready: bool,
     pub team: Option<String>,
 }
 
@@ -40,7 +39,6 @@ impl Player {
             connected: false,
             stream: None,
             current_location: None,
-            ready: false,
             team: None,
         }
     }
@@ -48,11 +46,6 @@ impl Player {
     pub fn update_token(&mut self, token: String) {
         tracing::info!("Updating token from {0} to {1}", self.token, token);
         self.token = token;
-    }
-
-    pub fn update_ready(&mut self, ready: bool) {
-        tracing::info!("Updating ready from {0} to {1}", self.ready, ready);
-        self.ready = ready;
     }
 
     pub fn update_connection(&mut self, connected: bool) {
@@ -87,15 +80,4 @@ impl Player {
             Err("No connection found".to_string())
         }
     }
-}
-
-pub async fn ready(
-    Extension(game): Extension<Arc<RwLock<Game>>>,
-    Extension(username): Extension<String>,
-) -> impl IntoResponse {
-    let mut game = game.write().await;
-    let player = game.players.get_mut(&username).unwrap();
-    let readystate = !player.ready;
-    player.update_ready(readystate);
-    Json(readystate).into_response();
 }

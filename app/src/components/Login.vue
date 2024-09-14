@@ -12,27 +12,28 @@
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from '@/components/ui/drawer'
+ } from '@/components/ui/drawer'
 
  import LoginForm from '@/components/LoginForm.vue'
 
  const drawerOpen = ref(false);
  onMounted(() => {
    listen('closeDrawer', () => {
-     console.log('Trying to close new DRAWER');
+     console.log('Trying to close drawer');
      drawerOpen.value = false;
    })
  })
+
 </script>
 
 <template>
   <div class="min-h-[95vh] flex items-center justify-center">
     <div class="w-full text-center pt-8">
-      <h1 class="text-7xl text-left italic">
-        CITY
+      <h1 class="text-7xl text-left italic underline">
+        CITY|
       </h1>
-      <h1 class="text-7xl text-right italic pb-8">
-        RUNNERS
+      <h1 class="text-7xl text-right italic pb-8 underline">
+        |RUNNERS
       </h1>
 
       <Drawer v-model:open="drawerOpen">
