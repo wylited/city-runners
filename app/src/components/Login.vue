@@ -38,7 +38,7 @@
       <Drawer v-model:open="drawerOpen">
         <DrawerTrigger aschild class="bg-black">
           <Button size="lg" class="text-2xl font-medium active:bg-gray">
-            RUN
+            CONNECT
           </Button>
         </DrawerTrigger>
         <DrawerContent>
