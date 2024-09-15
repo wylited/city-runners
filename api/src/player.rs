@@ -2,13 +2,11 @@ use std::sync::Arc;
 
 use axum::{
     extract::ws::{Message, WebSocket},
-    response::IntoResponse,
-    Extension, Json,
 };
 use futures::{stream::SplitSink, SinkExt};
 use tokio::sync::RwLock;
 
-use crate::{game::Game, location::Location, socket::Tx};
+use crate::{location::Location, socket::Tx};
 
 #[derive(Debug)]
 pub enum PlayerType {

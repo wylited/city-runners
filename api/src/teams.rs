@@ -1,13 +1,12 @@
 use std::sync::Arc;
 
 use axum::{extract::Path, response::IntoResponse, Extension, Json};
-use axum_macros::debug_handler;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use tokio::sync::RwLock;
 use tracing::info;
 
-use crate::{game::Game, location::Location, player::Player};
+use crate::{game::Game, location::Location};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum TeamType {

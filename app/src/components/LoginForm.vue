@@ -41,22 +41,26 @@
  const isLoading = ref(false)
 
  const onSubmit = handleSubmit(async (values) => {
-   isLoading.value = true
+   isLoading.value = true;
    try {
-     const token = await invoke('login', values)
-     console.log('Token received:', token)
-     store.token = token.slice(1, -1)
-     store.username = values.username
-     store.address = values.address
-     store.page = Lobby
+     const result = await invoke('login', values);
+     const [token, isAdmin] = result;
+
+     console.log('Token received:', token);
+     store.token = token.slice(1, -1);
+     store.username = values.username;
+     store.address = values.address;
+     store.admin = isAdmin;
+     store.page = Lobby;
    } catch (error) {
      console.error(error);
-     await message('Incorrect details', {title: 'City Runners', kind: 'error'})
+     await message('Incorrect details', { title: 'City Runners', kind: 'error' });
    } finally {
-     isLoading.value = false
+     isLoading.value = false;
    }
- })
+ });
 </script>
+
 <template>
   <form class="space-y-2 text-left" @submit="onSubmit">
     <FormField v-slot="{ componentField }" name="address">

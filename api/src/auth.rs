@@ -48,23 +48,28 @@ pub async fn login(
         .db
         .0
         .query_single(query, &(payload.username.clone(),))
-        .await; // TODO Simplify this into the DB.
+        .await;
 
-    if let Ok(Some(player)) = res { // If there is a player with the given username, log them in
+    if let Ok(Some(player)) = res {
         match verify(&payload.password, &player.password) {
             Ok(true) => {
                 let token = jwt(&payload.username, player.admin);
-                    let mut game_write = game.write().await;
-                    if let Some(player) = game_write.players.get_mut(&payload.username) {
-                        player.token.clone_from(&token);
-                    }
+                let mut game_write = game.write().await;
+                if let Some(player) = game_write.players.get_mut(&payload.username) {
+                    player.token.clone_from(&token);
+                }
 
-                (StatusCode::ACCEPTED, Json(json!({"token": token}))).into_response()
+                (
+                    StatusCode::ACCEPTED,
+                    Json(json!({"token": token, "admin": player.admin})),
+                )
+                .into_response()
             }
             _ => (
                 StatusCode::UNAUTHORIZED,
                 Json(json!({"error": "Invalid password"})),
-            ).into_response(),
+            )
+            .into_response(),
         }
     } else if res.is_ok() {
         let hashed_password = hash(&payload.password, DEFAULT_COST).unwrap();
@@ -82,7 +87,7 @@ pub async fn login(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(json!({"error": "Failed to insert new player"})),
             )
-                .into_response();
+            .into_response();
         }
 
         let token = jwt(&payload.username, false);
@@ -92,12 +97,17 @@ pub async fn login(
             player::Player::new(payload.username.clone(), token.clone()),
         );
 
-        return (StatusCode::ACCEPTED, Json(json!({"token": token}))).into_response();
+        return (
+            StatusCode::ACCEPTED,
+            Json(json!({"token": token, "admin": false})),
+        )
+        .into_response();
     } else {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error":"Server error"})),
-        ).into_response();
+            Json(json!({"error": "Server error"})),
+        )
+        .into_response();
     }
 }
 

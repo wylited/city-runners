@@ -7,7 +7,7 @@ pub async fn login(
     address: String,
     username: String,
     password: String,
-) -> Result<String, String> {
+) -> Result<(String, bool), String> {
     // Check server version
     let version_check = reqwest::get(&address).await.map_err(|e| e.to_string())?;
     let version_body = version_check.text().await.map_err(|e| e.to_string())?;
@@ -38,14 +38,14 @@ pub async fn login(
 
     let login_body: serde_json::Value = login_response.json().await.map_err(|e| e.to_string())?;
 
-    // Check token
-    if let Some(token) = login_body.get("token") {
+    // Check token and admin status
+    if let (Some(token), Some(admin)) = (login_body.get("token"), login_body.get("admin")) {
         println!("Token received: {}", token);
 
         app.emit("closeDrawer", ()).map_err(|e| e.to_string())?;
 
-        Ok(token.to_string())
+        Ok((token.to_string(), admin.as_bool().unwrap_or(false)))
     } else {
-        Err("invalid login details".into())
+        Err("Invalid login details".into())
     }
 }
