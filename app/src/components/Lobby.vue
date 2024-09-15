@@ -15,6 +15,8 @@
  import { invoke } from '@tauri-apps/api/core';
  import { ask } from '@tauri-apps/plugin-dialog';
 
+ import TeamForm from './TeamForm.vue'
+
  const isLoading = ref(false)
  const teams = ref<Team[]>([
    { id: '1', name: 'Alpha Example', players: ['Alice', 'Bob', 'Charlie'], ttype: 'Participant', ready: true },
@@ -48,7 +50,7 @@
  // Function to repeatedly fetch teams every 2 seconds
  const startFetchingTeams = () => {
    fetchTeams(); // Initial fetch
-   setInterval(fetchTeams, 2000); // Fetch every 2 seconds
+   setInterval(fetchTeams, 1000); // Fetch every 2 seconds
  };
 
  // Call the function to start fetching
@@ -188,11 +190,7 @@
         </div>
       </CardContent>
       <CardFooter class="border-t flex flex-col items-center justify-center p-4">
-        <template v-if="store.team === null">
-          <Button class="w-full text-2xl">
-            New Team
-          </Button>
-        </template>
+        <TeamForm v-if="store.team === null" />
         <template v-else>
           <template v-if="isLoading">
             <Button disabled
@@ -214,7 +212,6 @@
             </Button>
           </template>
         </template>
-        <Button v-if="store.admin" class="w-full text-2xl mt-2">Start</Button>
       </CardFooter>
     </Card>
   </div>

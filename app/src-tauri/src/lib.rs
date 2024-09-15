@@ -28,6 +28,7 @@ pub fn run() {
             teams::join,
             teams::leave,
             teams::ready,
+            teams::new,
             teams::get
         ]);
 
