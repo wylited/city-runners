@@ -11,6 +11,7 @@
     "store:default",
     "notification:default",
     "http:default",
-    "store:default"
+    "store:default",
+    "dialog:default"
   ]
 }

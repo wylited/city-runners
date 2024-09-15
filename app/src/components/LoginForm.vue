@@ -33,7 +33,8 @@
  const { handleSubmit } = useForm({
    validationSchema: formSchema,
    initialValues: {
-     address: 'https://city-runners.shuttleapp.rs',
+     address: store.address,
+     username: store.username,
    }
  })
 
@@ -46,9 +47,10 @@
      console.log('Token received:', token)
      store.token = token
      store.username = values.username
-     store.page = Lobby;
+     store.address = values.address
+     store.page = Lobby
    } catch (error) {
-     console.error(error)
+     console.error(error);
      await message('Incorrect details', {title: 'City Runners', kind: 'error'})
    } finally {
      isLoading.value = false

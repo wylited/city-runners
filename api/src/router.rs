@@ -29,6 +29,7 @@ pub fn router() -> Router {
             "/teams/:name/leave",
             post(teams::leave).layer(middleware::from_fn(auth::middleware)),
         )
+        .route("/teams/:name/ready", post(teams::ready).layer(middleware::from_fn(auth::middleware)))
         .route(
             "/teams/:name",
             patch(teams::update_team_name).layer(middleware::from_fn(auth::middleware)),

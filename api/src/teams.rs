@@ -65,27 +65,10 @@ impl Team {
 
 pub async fn getall(Extension(game): Extension<Arc<RwLock<Game>>>) -> impl IntoResponse {
     let game = game.read().await;
-    let mut teams = game.get_teams();
-    // modify teams asyncly to add a player count and for each player, their ready status
-
-    for team in teams.iter_mut() {
-        let mut players = Vec::new();
-        for player in team.1.players.iter() {
-            let gameplayer = game.get_player(player);
-            if let Ok(player) = gameplayer {
-                players.push(format!("{}", player.username));
-            } else {
-                players.push(format!("{} (invalid player)", player));
-            }
-        }
-        team.1.players = players;
-    }
-
-    info!("user req teams");
+    let teams = game.get_teams();
     Json(teams).into_response()
 }
 
-#[debug_handler]
 pub async fn get(
     Extension(game): Extension<Arc<RwLock<Game>>>,
     Extension(username): Extension<String>,
@@ -170,6 +153,27 @@ pub async fn leave(
         Json(json!({"error": "You are not a member of this team"})).into_response()
     }
 }
+
+pub async fn ready(
+    Extension(game): Extension<Arc<RwLock<Game>>>,
+    Path(team_name): Path<String>,
+    Extension(username): Extension<String>
+) -> impl IntoResponse {
+    let mut game = game.write().await;
+    let team = game.get_mut_team(&team_name).await;
+    if team.is_none() {
+        return Json(json!({"error": "Team not found"})).into_response();
+    }
+    let team = team.unwrap();
+    if team.is_player_on_team(&username) {
+        team.ready = !team.ready;
+        info!("user {} updated team ready: {}", username, team.ready);
+        Json(json!({"message": "Team name updated"})).into_response()
+    } else {
+        Json(json!({"error": "You are not a member of this team"})).into_response()
+    }
+}
+
 
 pub async fn update_team_name(
     Extension(game): Extension<Arc<RwLock<Game>>>,
