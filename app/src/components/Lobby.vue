@@ -78,8 +78,7 @@ const teams = ref<Team[]>([
           </Card>
         </div>
       </CardContent>
-      <CardFooter>
-        <Separator/>
+      <CardFooter class="border-t">
         <Button
           :style="{ backgroundColor: isCurrentTeamReady ? 'green' : 'lightcoral' }"
           class="w-full text-2xl"
