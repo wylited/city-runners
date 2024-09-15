@@ -27,6 +27,7 @@ pub fn run() {
             login::login,
             teams::join,
             teams::leave,
+            teams::ready,
             teams::get
         ]);
 

@@ -13,6 +13,7 @@
 
  import { message } from '@tauri-apps/plugin-dialog';
  import { invoke } from '@tauri-apps/api/core';
+ import { ask } from '@tauri-apps/plugin-dialog';
 
  const isLoading = ref(false)
  const teams = ref<Team[]>([
@@ -86,8 +87,34 @@
    }
  }
 
+ const toggleReadyState = async () => {
+   // Create a confirmation dialog
+   const answer = await ask('Are you sure?', {
+     title: 'Confirmation',
+     kind: 'warning',
+   });
+
+   // If the user confirms, proceed with toggling the ready state
+   if (answer) {
+     isLoading.value = true;
+     const values = {
+       team: store.team
+     }
+     try {
+       await invoke('ready', values);
+     } catch (error) {
+       console.error(error);
+       await message('Unable to change ready state', { title: 'City Runners', kind: 'error' });
+     } finally {
+       isLoading.value = false;
+     }
+   } else {
+     console.log('User canceled the action');
+   }
+ };
+
  const isTeamReady = computed(() => {
-   const team = teams.value.find(team => team.id === store.team)
+   const team = teams.value.find(team => team.name === store.team)
    return team ? team.ready : false
  })
 
@@ -167,12 +194,25 @@
           </Button>
         </template>
         <template v-else>
-        <Button
-          :style="{ backgroundColor: isTeamReady ? 'green' : 'lightcoral' }"
-          class="w-full text-2xl"
-        >
-          {{isTeamReady ? 'Unready' : 'Ready'}}
-        </Button>
+          <template v-if="isLoading">
+            <Button disabled
+                    :style="{ backgroundColor: isTeamReady ? 'green' : 'lightcoral' }"
+                    class="w-full text-2xl"
+                    @click="toggleReadyState"
+            >
+              {{isTeamReady ? 'Unready' : 'Ready'}}
+            </Button>
+
+          </template>
+          <template v-else>
+            <Button
+              :style="{ backgroundColor: isTeamReady ? 'green' : 'lightcoral' }"
+              class="w-full text-2xl"
+              @click="toggleReadyState"
+            >
+              {{isTeamReady ? 'Unready' : 'Ready'}}
+            </Button>
+          </template>
         </template>
         <Button v-if="store.admin" class="w-full text-2xl mt-2">Start</Button>
       </CardFooter>

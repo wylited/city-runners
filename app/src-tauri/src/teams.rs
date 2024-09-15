@@ -121,3 +121,38 @@ pub async fn leave(app: AppHandle, team: String) -> Result<(), String> {
         return Err("Error in connecting to localstore".into())
     }
 }
+
+#[tauri::command]
+pub async fn ready(app: AppHandle, team: String) -> Result<(), String> {
+    let stores = app.app_handle().try_state::<StoreCollection<Wry>>().ok_or("store not found")?;
+    let path = PathBuf::from("store.bin");
+
+    // Access data from store
+    if let Ok((token, address)) = with_store(app.app_handle().clone(), stores, path, |store| {
+        let token = store.get("token").expect("failed to get token").to_string().trim_matches('"').to_string();
+        let address = store.get("address").expect("failed to get address").to_string().trim_matches('"').to_string();
+        Ok((token, address))
+    }) {
+        let client = reqwest::Client::new();
+        let ready_url = format!("{address}/teams/{team}/ready");
+        let header = format!("Bearer {token}");
+        println!("Ready team URL: {ready_url}, Authorization: {header}");
+
+        // Send POST request to the ready endpoint
+        let ready_response = client
+            .post(&ready_url)
+            .header("Authorization", header)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // Check if the request was successful
+        if ready_response.status().is_success() {
+            return Ok(())
+        } else {
+            return Err(format!("Failed to mark team as ready: {}", ready_response.status()))
+        }
+    } else {
+        return Err("Error in connecting to localstore".into())
+    }
+}
