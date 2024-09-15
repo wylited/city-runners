@@ -16,30 +16,50 @@
 
  const isLoading = ref(false)
  const teams = ref<Team[]>([
-   { id: '1', name: 'Alpha Example', members: ['Alice', 'Bob', 'Charlie'], ttype: 'Participant', ready: true },
-   { id: '2', name: 'Beta Brigade', members: ['David', 'Eve', 'Frank'], ttype: 'Spectator', ready: false },
-   { id: '3', name: 'Gamma Group', members: ['Grace', 'Heidi', 'Ivan'], ttype: 'Participant', ready: true },
-   { id: '4', name: 'Delta Division', members: ['Judy', 'Kevin', 'Liam'], ttype: 'Participant', ready: false },
-   { id: '5', name: 'Epsilon Ensemble', members: ['Mallory', 'Nina', 'Oscar'], ttype: 'Spectator', ready: true }
+   { id: '1', name: 'Alpha Example', players: ['Alice', 'Bob', 'Charlie'], ttype: 'Participant', ready: true },
+   { id: '2', name: 'Beta Brigade', players: ['David', 'Eve', 'Frank'], ttype: 'Spectator', ready: false },
+   { id: '3', name: 'Gamma Group', players: ['Grace', 'Heidi', 'Ivan'], ttype: 'Participant', ready: true },
+   { id: '4', name: 'Delta Division', players: ['Judy', 'Kevin', 'Liam'], ttype: 'Participant', ready: false },
+   { id: '5', name: 'Epsilon Ensemble', players: ['Mallory', 'Nina', 'Oscar'], ttype: 'Spectator', ready: true }
  ])
 
  const fetchTeams = async () => {
-   isLoading.value = true;
    try {
-     const response = await invoke<Team[]>('get');
-     teams.value = response;
+     const response = await invoke<Team[]>('get'); // Fetch teams from backend
+     teams.value = response; // Update teams
+
+     // Check if the current user is in any of the fetched teams
+     const currentUserTeam = response.find(team =>
+       team.players.includes(store.username || '')
+     );
+
+     // Update the store.team value based on whether the user is in a team
+     if (currentUserTeam) {
+       store.team = currentUserTeam.name;
+     } else {
+       store.team = null;
+     }
    } catch (error) {
      console.error(error);
      await message('Failed to fetch teams', { title: 'City Runners', kind: 'error' });
-   } finally {
-     isLoading.value = false;
    }
  };
+ // Function to repeatedly fetch teams every 2 seconds
+ const startFetchingTeams = () => {
+   fetchTeams(); // Initial fetch
+   setInterval(fetchTeams, 2000); // Fetch every 2 seconds
+ };
+
+ // Call the function to start fetching
+ startFetchingTeams();
 
  const joinTeam = async (teamId: string) => {
    isLoading.value = true
+   const values = {
+     team: teamId,
+   }
    try {
-     const response = await invoke('join', teamId);
+     await invoke('join', values);
      store.team = teamId
    } catch (error) {
      console.error(error);
@@ -49,8 +69,21 @@
    }
  }
 
- const leaveTeam = () => {
-   store.team = null
+ const leaveTeam = async (teamId: string) => {
+   const values = {
+     team: teamId
+   }
+   console.log(values);
+   isLoading.value = true
+   try {
+     await invoke('leave', values);
+     store.team = null
+   } catch (error) {
+     console.error(error);
+     await message('Unable to leave', {title: 'City Runners', kind: 'error'})
+   } finally{
+     isLoading.value = false
+   }
  }
 
  const isTeamReady = computed(() => {
@@ -86,7 +119,7 @@
         <div class="flex-1 max-h-[78vh] overflow-y-auto overflow-scroll">
           <Card
             v-for="team in teams"
-            :key="team.id"
+            :key="team.name"
             class="my-6"
           >
             <CardHeader class="flex flex-row items-center justify-between pb-2">
@@ -109,18 +142,18 @@
               <template v-if="isLoading">
                 <Button
                   disabled
-                  :variant="store.team === team.id ? 'destructive' : 'default'"
+                  :variant="store.team === team.name ? 'destructive' : 'default'"
                   class="w-full">
-                  {{ store.team === team.id ? 'Leave' : 'Join' }}
+                  {{ store.team === team.name ? 'Leave' : 'Join' }}
                 </Button>
               </template>
               <template v-else>
                 <Button
-                  @click="store.team === team.id ? leaveTeam() : joinTeam(team.id)"
-                  :variant="store.team === team.id ? 'destructive' : 'default'"
+                  @click="store.team === team.name ? leaveTeam(team.name) : joinTeam(team.name)"
+                  :variant="store.team === team.name ? 'destructive' : 'default'"
                   class="w-full"
                 >
-                  {{ store.team === team.id ? 'Leave' : 'Join' }}
+                  {{ store.team === team.name ? 'Leave' : 'Join' }}
                 </Button>
               </template>
             </CardFooter>

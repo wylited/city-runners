@@ -22,7 +22,6 @@ pub async fn get(app: AppHandle) -> Result<Vec<Team>, String> {
         .try_state::<StoreCollection<Wry>>()
         .ok_or("store not found")?;
     let path = PathBuf::from("store.bin");
-    println!("teams: fetching teams");
 
     if let Ok(address) = with_store(app.app_handle().clone(), stores, path, |store| {
         let address: String = store.get("address")
@@ -33,15 +32,12 @@ pub async fn get(app: AppHandle) -> Result<Vec<Team>, String> {
         Ok(address)
     }) {
         let teams_url = format!("{}/teams", address);
-        println!("addy {teams_url}");
         let teams_response = reqwest::get(&teams_url)
             .await
             .map_err(|e| {
                 println!("{:?}", e);
                 e.to_string()
             })?;
-
-        println!("teams: got something");
 
         let teams_map: HashMap<String, Value> = teams_response.json().await.map_err(|e| e.to_string())?;
         let mut teams = Vec::new();
@@ -59,21 +55,24 @@ pub async fn get(app: AppHandle) -> Result<Vec<Team>, String> {
 }
 
 #[tauri::command]
-pub async fn join(app: AppHandle, team: String ) -> Result<(), String> {
+pub async fn join(app: AppHandle, team: String) -> Result<(), String> {
+    println!("args {team}");
     let stores = app.app_handle().try_state::<StoreCollection<Wry>>().ok_or("store not found")?;
     let path = PathBuf::from("store.bin");
 
     // access data from store
     if let Ok((token, address)) = with_store(app.app_handle().clone(), stores, path, |store| {
-        let token = store.get("token").expect("failed to get token").to_string();
-        let address = store.get("address").expect("failed to get address").to_string();
+        let token = store.get("token").expect("failed to get token").to_string().trim_matches('"').to_string();
+        let address = store.get("address").expect("failed to get address").to_string().trim_matches('"').to_string();
         Ok((token, address))
     }) {
         let client = reqwest::Client::new();
-        let join_url = format!("{}/teams/{}/join", address, team);
+        let join_url = format!("{address}/teams/{team}/join");
+        let header = format!("Bearer {token}");
+        println!("addy: {join_url}, Authorization: {header}");
         let join_response = client
             .post(&join_url)
-            .header("Authorization", format!("Bearer {}", token))
+            .header("Authorization", header)
             .send()
             .await
             .map_err(|e| e.to_string())?;
@@ -82,6 +81,41 @@ pub async fn join(app: AppHandle, team: String ) -> Result<(), String> {
             return Ok(())
         } else {
             return Err(format!("Failed to join: {}", join_response.status()))
+        }
+    } else {
+        return Err("Error in connecting to localstore".into())
+    }
+}
+
+#[tauri::command]
+pub async fn leave(app: AppHandle, team: String) -> Result<(), String> {
+    let stores = app.app_handle().try_state::<StoreCollection<Wry>>().ok_or("store not found")?;
+    let path = PathBuf::from("store.bin");
+
+    // Access data from store
+    if let Ok((token, address)) = with_store(app.app_handle().clone(), stores, path, |store| {
+        let token = store.get("token").expect("failed to get token").to_string().trim_matches('"').to_string();
+        let address = store.get("address").expect("failed to get address").to_string().trim_matches('"').to_string();
+        Ok((token, address))
+    }) {
+        let client = reqwest::Client::new();
+        let leave_url = format!("{address}/teams/{team}/leave");
+        let header = format!("Bearer {token}");
+        println!("Leave team URL: {leave_url}, Authorization: {header}");
+
+        // Send POST request to the leave endpoint
+        let leave_response = client
+            .post(&leave_url)
+            .header("Authorization", header)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // Check if the request was successful
+        if leave_response.status().is_success() {
+            return Ok(())
+        } else {
+            return Err(format!("Failed to leave team: {}", leave_response.status()))
         }
     } else {
         return Err("Error in connecting to localstore".into())

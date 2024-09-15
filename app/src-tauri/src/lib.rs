@@ -1,7 +1,6 @@
 mod login;
 mod teams;
 
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     //#[cfg(debug_assertions)]
@@ -27,6 +26,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             login::login,
             teams::join,
+            teams::leave,
             teams::get
         ]);
 

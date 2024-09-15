@@ -45,7 +45,7 @@
    try {
      const token = await invoke('login', values)
      console.log('Token received:', token)
-     store.token = token
+     store.token = token.slice(1, -1)
      store.username = values.username
      store.address = values.address
      store.page = Lobby
