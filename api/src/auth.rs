@@ -22,13 +22,6 @@ pub struct Player {
     password: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AuthClaims {
-    pub sub: String,
-    pub exp: usize,
-    pub admin: bool,
-}
-
 pub async fn login(
     Extension(game): Extension<Arc<RwLock<Game>>>,
     Json(payload): Json<Player>,
@@ -71,7 +64,8 @@ pub async fn login(
             )
             .into_response(),
         }
-    } else if res.is_ok() {
+    }
+    else if res.is_ok() {
         let hashed_password = hash(&payload.password, DEFAULT_COST).unwrap();
         let query = "insert Player { username := <str>$0, password := <str>$1, admin := false}";
         if game
@@ -111,6 +105,13 @@ pub async fn login(
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AuthClaims {
+    pub sub: String, // username
+    pub exp: usize,
+    pub admin: bool,
+}
+
 pub fn jwt(username: &str, admin: bool) -> String {
     let secret = match std::env::var("JWT_SECRET") {
         Ok(secret) => secret,
@@ -119,10 +120,12 @@ pub fn jwt(username: &str, admin: bool) -> String {
 
     let claims = AuthClaims {
         sub: username.to_owned(),
-        exp: (chrono::Utc::now() + chrono::Duration::hours(24)).timestamp() as usize, // expires 24 hours later
+        exp: (chrono::Utc::now() + chrono::Duration::hours(24)).timestamp() as usize,
+        // expires 24 hours later
         admin,
     };
 
+    //encode the data using the hash SHA256 with a secret key
     match encode(
         &Header::new(Algorithm::HS256),
         &claims,

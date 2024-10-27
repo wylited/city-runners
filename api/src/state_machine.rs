@@ -13,7 +13,7 @@ pub enum Event {
 }
 
 pub struct GameStateMachine {
-    pub state: Arc<RwLock<GameState>>,               // current state
+    pub state: Arc<RwLock<GameState>>, // current state
     pub rx: mpsc::Receiver<Event>, // event channel, recieve events
     pub game: Arc<RwLock<Game>>,
 }

@@ -6,7 +6,7 @@ use axum::{
         Query, WebSocketUpgrade,
     },
     http::StatusCode,
-    response::{IntoResponse},
+    response::IntoResponse,
     Extension,
 };
 use futures::{
@@ -73,6 +73,7 @@ pub async fn websocket(socket: WebSocket, who: String, game: Arc<RwLock<Game>>) 
     }
 
     assign_stream(&game, &who, tx).await;
+    handle_version_op(&who, &game).await;
 
     tokio::spawn(async move {
         handle_messages(rx, &who, game).await;
@@ -138,6 +139,7 @@ async fn handle_json_message(text: String, who: &str, game: &Arc<RwLock<Game>>) 
         match op {
             "location" => handle_location_op(&json, who, game).await,
             "chat" => handle_chat_op(&json, who, game).await,
+            "version" => handle_version_op(who, game).await,
             _ => tracing::error!("Invalid operation from {}: {}", who, op),
         }
     }
@@ -154,6 +156,17 @@ async fn send_invalid_json_error(who: &str, game: &Arc<RwLock<Game>>) {
         .send_msg(Message::Text(error_msg))
         .await
         .unwrap();
+}
+
+async fn handle_version_op(who: &str, game: &Arc<RwLock<Game>>) {
+    let version_response = json!({
+        "op": "version",
+        "version": "City Runners, version 0.1.0"
+    });
+    let version_msg = serde_json::to_string(&version_response).unwrap();
+    if let Err(e) = game.write().await.players.get_mut(who).unwrap().send_msg(Message::Text(version_msg)).await {
+        tracing::error!("Failed to send version to {}: {}", who, e);
+    }
 }
 
 async fn handle_chat_op(json: &serde_json::Value, who: &str, game: &Arc<RwLock<Game>>) {

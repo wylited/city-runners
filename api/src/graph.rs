@@ -16,72 +16,126 @@ impl Graph {
     }
 
     pub fn from_csv() -> Self {
+        // Derive the graph from the csv.
         let mut lines: Vec<&str> = CSV.lines().collect();
-        lines.retain(|line| !line.trim().is_empty());
+        lines.retain(|line| !line.trim().is_empty()); // parse csv into a string and remove all empty lines.
 
-        let mut stations: HashMap<Code, Station> = HashMap::new();
+        let mut stations: HashMap<Code, Station> = HashMap::new(); // empty datastructure
         let mut connections = HashSet::<Connection>::new();
-
         let mut prev_station: Option<Station> = None;
 
         for line in lines {
-            let columns: Vec<&str> = line.split(',').collect();
+            // for each line in the csv
+            let cols: Vec<&str> = line.split(',').collect(); // split into each column
 
-            if columns[0].is_empty() {
-                prev_station = None;
-                continue;
+            if cols[0].is_empty() {
+                // if we notice that the line is changing
+                prev_station = None; // don't create a connection to the previous station
+                continue; // skip
             }
 
+            // get the details of the Station.
             let code = Code(
-                columns[0].chars().nth(0).unwrap(),
-                columns[0].chars().nth(1).unwrap(),
-                columns[0].chars().nth(2).unwrap(),
+                cols[0].chars().nth(0).unwrap(),
+                cols[0].chars().nth(1).unwrap(),
+                cols[0].chars().nth(2).unwrap(),
+            );
+            let line_code = Code(
+                cols[5].chars().next().unwrap(),
+                cols[5].chars().nth(1).unwrap(),
+                cols[5].chars().nth(2).unwrap(),
             );
 
-            let name = columns[1].to_string();
-            let latitude = columns[2].parse::<f64>().unwrap();
-            let longitude = columns[3].parse::<f64>().unwrap();
-            let line_code = columns[5].to_string();
-
+            // Create the Station
             let station = Station {
                 code,
-                name,
-                latitude,
-                longitude,
-                line_code: Code(
-                    line_code.chars().next().unwrap(),
-                    line_code.chars().nth(1).unwrap(),
-                    line_code.chars().nth(2).unwrap(),
-                ),
+                name: cols[1].to_string(),
+                latitude: cols[2].parse::<f64>().unwrap(),
+                longitude: cols[3].parse::<f64>().unwrap(),
+                line_code,
             };
 
-            stations.insert(station.code, station.clone());
+            stations.insert(station.code, station.clone()); // Add the station to the hashmap
 
             if let Some(prev_station) = prev_station {
-                if prev_station.line_code.to_string() == line_code {
-                    let minutes = columns[4].parse::<usize>().unwrap_or(0);
+                // if the previous station exists
+                if prev_station.line_code == line_code {
+                    // check if the line codes are the same
+                    let minutes = cols[4].parse::<usize>().unwrap_or(0); // if so, create a connection and add it to the hashset.
                     let connection = Connection(prev_station.code, station.code, minutes);
                     connections.insert(connection);
                 }
             }
-
-            prev_station = Some(station);
+            prev_station = Some(station); // before recursing, set the previous station to the current one.
         }
+        Graph {
+            stations,
+            connections,
+        } // return the Graph
+    }
 
+    pub fn from_ron() -> Self {
+        let stations: HashMap<Code, Station> = ron::de::from_str(STATIONS).unwrap();
+        let connections: HashSet<Connection> = ron::de::from_str(CONNECTIONS).unwrap();
         Graph {
             stations,
             connections,
         }
     }
 
-    pub fn from_ron() -> Self {
-        let stations: HashMap<Code, Station> = ron::de::from_str(STATIONS).unwrap();
-        let connections: HashSet<Connection> = ron::de::from_str(CONNECTIONS).unwrap();
+    pub fn dfs(&self, start_code: Code, max_time: usize) -> Vec<Station> {
+        // Ensure the start station exists in the graph.
+        let start_station = match self.stations.get(&start_code) {
+            Some(station) => station,
+            None => return vec![], // If start station doesn't exist, return an empty list.
+        };
 
-        Graph {
-            stations,
-            connections,
+        // Visited set to avoid revisiting stations.
+        let mut visited = HashSet::new();
+        visited.insert(start_code);
+
+        // Stack to simulate DFS. Each entry contains the current station and the time spent to reach it.
+        let mut stack = vec![(start_station.clone(), 0)];
+        let mut result = vec![];
+
+        // DFS loop
+        while let Some((current_station, current_time)) = stack.pop() {
+            // Add the current station to the result if it’s not the starting station.
+            if current_station != *start_station {
+                result.push(current_station.clone());
+            }
+
+            // Iterate over all connections to the current station.
+            for connection in self.connections.iter() {
+                // Check if the connection involves the current station.
+                if connection == &current_station.code {
+                    // Determine the next station in the connection.
+                    let next_code = if connection.0 == current_station.code {
+                        connection.1
+                    } else {
+                        connection.0
+                    };
+
+                    // Skip if we’ve already visited this station.
+                    if visited.contains(&next_code) {
+                        continue;
+                    }
+
+                    // Calculate the new time after traveling this connection.
+                    let new_time = current_time + connection.2;
+
+                    // If the new time is within the limit, continue DFS from the next station.
+                    if new_time <= max_time {
+                        if let Some(next_station) = self.stations.get(&next_code) {
+                            visited.insert(next_code);
+                            stack.push((next_station.clone(), new_time));
+                        }
+                    }
+                }
+            }
         }
+        // return the vector
+        result
     }
 }
 

@@ -20,6 +20,14 @@ pub struct Station {
     pub line_code: Code,
 }
 
+// Code for an MTR Station with 3 characters like LOW for lowu
+#[derive(Debug, Deserialize, Copy, Clone, Eq)]
+pub struct Code(pub char, pub char, pub char);
+
+// Station code 1, Station code 2, Distance in minutes
+#[derive(Debug, Deserialize, Serialize, Copy, Clone, Eq)]
+pub struct Connection(pub Code, pub Code, pub usize);
+
 // Compare stations against other stations by their code
 impl PartialEq for Station {
     fn eq(&self, other: &Self) -> bool {
@@ -47,10 +55,6 @@ impl Hash for Station {
         hasher.write(self.code.to_string().as_bytes());
     }
 }
-
-// A Code, made up of 3 characters.
-#[derive(Debug, Deserialize, Copy, Clone, Eq)]
-pub struct Code(pub char, pub char, pub char);
 
 impl Serialize for Code {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -121,10 +125,6 @@ impl Hash for Code {
     }
 }
 
-// Station code 1, Station code 2, Distance in minutes
-#[derive(Debug, Deserialize, Serialize, Copy, Clone, Eq)]
-pub struct Connection(pub Code, pub Code, pub usize);
-
 // trait to compare connections
 impl PartialEq for Connection {
     fn eq(&self, other: &Self) -> bool {
@@ -132,8 +132,7 @@ impl PartialEq for Connection {
     }
 }
 
-// trait to directly compare a code against both codes of the connection
-// as it is undirected
+// trait to directly compare a code against both codes of the connection as it is undirected
 impl PartialEq<Code> for Connection {
     fn eq(&self, other: &Code) -> bool {
         self.0 == *other || self.1 == *other
@@ -151,11 +150,11 @@ impl PartialEq<&str> for Connection {
 impl Hash for Connection {
     fn hash<H: Hasher>(&self, hasher: &mut H) {
         hasher.write((self.0 + self.1).to_string().as_bytes());
+        // add together the two codes and save them as bytes.
     }
 }
 
 // a handler to return the json of all stations
-
 pub async fn get(Extension(game): Extension<Arc<RwLock<Game>>>) -> impl IntoResponse {
     Json(serde_json::to_string(&game.read().await.graph.stations).unwrap_or_else(|_| "error occured".to_string()))
 }

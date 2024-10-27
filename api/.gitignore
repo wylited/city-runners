@@ -2,3 +2,6 @@ target/
 logs/
 Cargo.lock
 Secrets.toml
+/target
+.shuttle*
+Secrets*.toml
