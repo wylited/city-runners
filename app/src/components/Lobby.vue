@@ -138,7 +138,7 @@
   <div class="flex flex-col py-2 px-2">
     <Card class="min-h-[95vh]">
       <CardHeader class="flex-row justify-between items-center px-4 py-2 border-b">
-        <Button variant="ghost" class="text-lg font-semibold italic w-min">Lobby</Button>
+        <Button variant="ghost" class="text-2xl font-semibold italic w-min">Lobby</Button>
         <div class="flex items-center space-x-2">
           <Badge variant="secondary" class="text-xs">{{ store.admin }}</Badge>
           <p class="text-sm italic underline">{{ store.username }}</p>

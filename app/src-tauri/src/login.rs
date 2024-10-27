@@ -1,5 +1,7 @@
 use tauri::{AppHandle, Emitter};
 use tauri_plugin_http::reqwest;
+use tokio::task;
+use crate::socket::socket;
 
 #[tauri::command]
 pub async fn login(
@@ -43,6 +45,12 @@ pub async fn login(
         println!("Token received: {}", token);
 
         app.emit("closeDrawer", ()).map_err(|e| e.to_string())?;
+
+        let t = token.to_string();
+
+        task::spawn(async move {
+            socket(app.clone(), t.clone()).await;
+        });
 
         Ok((token.to_string(), admin.as_bool().unwrap_or(false)))
     } else {

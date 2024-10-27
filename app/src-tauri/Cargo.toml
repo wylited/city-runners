@@ -24,3 +24,7 @@ tauri-plugin-notification = "2.0.0-rc"
 tauri-plugin-http = "2.0.0-rc"
 tauri-plugin-dialog = "2.0.0-rc"
 tauri-plugin-devtools = "2.0.0-rc"
+tokio-tungstenite = { version = "0.24.0", features = ["rustls-tls-webpki-roots"] }
+futures = "0.3.30"
+tokio = { version = "1.40.0", features = ["sync", "time", "rt"] }
+futures-util = { version = "0.3.30", features = ["sink", "std"] }

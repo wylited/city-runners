@@ -1,4 +1,5 @@
 mod login;
+mod socket;
 mod teams;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
