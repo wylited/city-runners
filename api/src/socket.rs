@@ -73,7 +73,16 @@ pub async fn websocket(socket: WebSocket, who: String, game: Arc<RwLock<Game>>) 
     }
 
     assign_stream(&game, &who, tx).await;
-    handle_version_op(&who, &game).await;
+
+    let connect_notif = json!({
+        "op": "notif",
+        "msg": "Connected to game instance",
+        "who": "server",
+    });
+    let version_msg = serde_json::to_string(&connect_notif).unwrap();
+    if let Err(e) = game.write().await.players.get_mut(&who).unwrap().send_msg(Message::Text(version_msg)).await {
+        tracing::error!("Failed to connect to {}: {}", who, e);
+    }
 
     tokio::spawn(async move {
         handle_messages(rx, &who, game).await;

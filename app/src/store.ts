@@ -7,7 +7,9 @@ export interface Team {
   name: string;
   players: string[];
   ttype: string;
-  ready: bool;
+  ready: boolean;
+  messages: { [timestamp: string]: string };
+  socket: boolean;
 }
 
 const tauriStore = new Store('store.bin');
@@ -19,6 +21,8 @@ export const store = reactive({
   username: null as string | null,
   token: null as string | null,
   team: null as string | null,
+  messages: {} as { [timestamp: string]: string }, // Hashmap for messages
+  socket: false as boolean,
 });
 
 // Function to load data from tauri-store
@@ -28,6 +32,8 @@ async function loadStore() {
   store.admin = (await tauriStore.get('admin')) as boolean;
   store.address = (await tauriStore.get('address')) as string;
   store.team = (await tauriStore.get('team')) as string | null;
+  store.messages = (await tauriStore.get('messages')) as { [timestamp: string]: string };
+  store.socket = (await tauriStore.get('socket') as boolean);
 }
 
 // Function to save data to tauri-store
@@ -38,6 +44,8 @@ async function saveStore() {
   await tauriStore.set('admin', store.admin);
   await tauriStore.set('address', store.address);
   await tauriStore.set('team', store.team);
+  await tauriStore.set('messages', store.messages); // Save messages
+  await tauriStore.set('socket', store.socket);
   await tauriStore.save();
 }
 

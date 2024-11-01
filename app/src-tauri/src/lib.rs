@@ -1,3 +1,4 @@
+mod game;
 mod login;
 mod socket;
 mod teams;
@@ -30,7 +31,9 @@ pub fn run() {
             teams::leave,
             teams::ready,
             teams::new,
-            teams::get
+            teams::get,
+            game::start,
+            socket::connect,
         ]);
 
     //#[cfg(debug_assertions)]

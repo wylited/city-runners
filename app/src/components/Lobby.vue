@@ -47,10 +47,11 @@
      await message('Failed to fetch teams', { title: 'City Runners', kind: 'error' });
    }
  };
+
  // Function to repeatedly fetch teams every 2 seconds
  const startFetchingTeams = () => {
    fetchTeams(); // Initial fetch
-   setInterval(fetchTeams, 1000); // Fetch every 2 seconds
+   setInterval(fetchTeams, 3000); // Fetch every 2 seconds
  };
 
  // Call the function to start fetching
@@ -88,6 +89,30 @@
      isLoading.value = false
    }
  }
+
+ const startGame = async () => {
+     isLoading.value = true;
+     try {
+         await invoke('start');
+     } catch (error) {
+         console.error(error);
+         await message('Unable to start the game', { title: 'City Runners', kind: 'error' });
+     } finally {
+         isLoading.value = false;
+     }
+
+     isLoading.value = true;
+     try {
+         await invoke('connect');
+         await message('Connected to the game');
+     } catch (error) {
+         console.error(error);
+         await message('Unable to connect to the game', { title: 'City Runners', kind: 'error' });
+     } finally {
+         isLoading.value = false;
+     }
+
+ };
 
  const toggleReadyState = async () => {
    // Create a confirmation dialog
@@ -140,7 +165,9 @@
       <CardHeader class="flex-row justify-between items-center px-4 py-2 border-b">
         <Button variant="ghost" class="text-2xl font-semibold italic w-min">Lobby</Button>
         <div class="flex items-center space-x-2">
-          <Badge variant="secondary" class="text-xs">{{ store.admin }}</Badge>
+            <Badge variant="secondary" className="text-xs">
+                {{store.admin ? 'admin' : 'player'}}
+            </Badge>
           <p class="text-sm italic underline">{{ store.username }}</p>
         </div>
       </CardHeader>
@@ -187,6 +214,15 @@
               </template>
             </CardFooter>
           </Card>
+          <template v-if="store.admin">
+              <Button
+                  @click="startGame"
+                  class="w-full text-2xl"
+                  :style="{ backgroundColor: 'gray' }"
+              >
+                  Start
+              </Button>
+          </template>
         </div>
       </CardContent>
       <CardFooter class="border-t flex flex-col items-center justify-center p-4">

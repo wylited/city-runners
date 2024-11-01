@@ -48,10 +48,6 @@ pub async fn login(
 
         let t = token.to_string();
 
-        task::spawn(async move {
-            socket(app.clone(), t.clone()).await;
-        });
-
         Ok((token.to_string(), admin.as_bool().unwrap_or(false)))
     } else {
         Err("Invalid login details".into())
