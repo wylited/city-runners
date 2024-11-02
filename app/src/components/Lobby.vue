@@ -16,6 +16,7 @@
  import { ask } from '@tauri-apps/plugin-dialog';
 
  import TeamForm from './TeamForm.vue'
+ import Game from './Game.vue'
 
  const isLoading = ref(false)
  const teams = ref<Team[]>([
@@ -94,6 +95,8 @@
      isLoading.value = true;
      try {
          await invoke('start');
+         store.page = Game;
+         console.log(store.page);
      } catch (error) {
          console.error(error);
          await message('Unable to start the game', { title: 'City Runners', kind: 'error' });
@@ -103,13 +106,13 @@
 
      isLoading.value = true;
      try {
-         await invoke('connect');
-         await message('Connected to the game');
+        await invoke('connect');
      } catch (error) {
          console.error(error);
          await message('Unable to connect to the game', { title: 'City Runners', kind: 'error' });
-     } finally {
-         isLoading.value = false;
+     } finally{
+        await message('Connected to the game');
+        isLoading.value = false;
      }
 
  };

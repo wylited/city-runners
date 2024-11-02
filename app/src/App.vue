@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Login from "./components/Login.vue";
+import Game from "./components/Game.vue";
 import { store } from "./store.ts"
 import { onMounted } from 'vue'
 

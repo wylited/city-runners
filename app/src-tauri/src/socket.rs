@@ -110,6 +110,7 @@ async fn handle_json_message(text: String, app: AppHandle) {
             if let Some(op) = json.get("op").and_then(Value::as_str) {
                 match op {
                     "notif" => handle_notif(json, app).await,
+                    "state" => handle_state(json, app).await,
                     "location" => handle_location(json).await,
                     _ => println!("Unknown operation: {}", op),
                 }
@@ -133,6 +134,35 @@ async fn handle_notif(json: Value, app: AppHandle) {
             .unwrap();
     } else {
         println!("Missing 'who' or 'msg' key in notification");
+    }
+}
+
+async fn handle_state(json: Value, app: AppHandle) {
+    if let Some(state) = json.get("state") {
+        let store = match app.get_store("store.bin") {
+            Some(s) => s,
+            None => {
+                println!("Store missing");
+                return;
+            }
+        };
+
+        store.set("state", state)?; // Need to handle the Result
+
+        match state.as_str() {
+            Some("Lobby") => {},
+            Some("Hide") => {},
+            Some("Seek") => {},
+            Some("RoundEnd") => {},
+            Some(unknown_state) => {
+                println!("unknown state {}", unknown_state)
+            },
+            None => {
+                println!("state value is not a string")
+            }
+        }
+    } else {
+        println!("Missing 'state' key in update");
     }
 }
 

@@ -7,9 +7,11 @@ export interface Team {
   name: string;
   players: string[];
   ttype: string;
+  gamestate: string;
   ready: boolean;
   messages: { [timestamp: string]: string };
   socket: boolean;
+  page: typeof Login;
 }
 
 const tauriStore = new Store('store.bin');
@@ -21,6 +23,7 @@ export const store = reactive({
   username: null as string | null,
   token: null as string | null,
   team: null as string | null,
+  gamestate: null as string | null,
   messages: {} as { [timestamp: string]: string }, // Hashmap for messages
   socket: false as boolean,
 });
