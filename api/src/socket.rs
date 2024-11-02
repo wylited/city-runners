@@ -79,8 +79,8 @@ pub async fn websocket(socket: WebSocket, who: String, game: Arc<RwLock<Game>>) 
         "msg": "Connected to game instance",
         "who": "server",
     });
-    let version_msg = serde_json::to_string(&connect_notif).unwrap();
-    if let Err(e) = game.write().await.players.get_mut(&who).unwrap().send_msg(Message::Text(version_msg)).await {
+    let notif = serde_json::to_string(&connect_notif).unwrap();
+    if let Err(e) = game.write().await.players.get_mut(&who).unwrap().send_msg(Message::Text(notif)).await {
         tracing::error!("Failed to connect to {}: {}", who, e);
     }
 

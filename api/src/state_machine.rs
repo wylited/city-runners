@@ -73,10 +73,10 @@ impl GameStateMachine {
     // loop code
     async fn process_state(&mut self) {
         match self.get_state().await {
-            GameState::Lobby(mut state) => state.update(self.game.clone()),
-            GameState::Hide(mut state) => state.update(self.game.clone()),
-            GameState::Seek(mut state) => state.update(self.game.clone()),
-            GameState::RoundEnd(mut state) => state.update(self.game.clone()),
+            GameState::Lobby(mut state) => state.update(self.game.clone()).await,
+            GameState::Hide(mut state) => state.update(self.game.clone()).await,
+            GameState::Seek(mut state) => state.update(self.game.clone()).await,
+            GameState::RoundEnd(mut state) => state.update(self.game.clone()).await,
         }
     }
 

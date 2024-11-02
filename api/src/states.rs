@@ -1,3 +1,5 @@
+use axum::extract::ws::Message;
+use serde_json::json;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -24,21 +26,38 @@ impl IntoResponse for GameState {
     }
 }
 
+#[async_trait::async_trait]
 pub trait State {
-    fn init(&mut self, game: Arc<RwLock<Game>>);
-    fn update(&mut self, game: Arc<RwLock<Game>>);
+    async fn init(&mut self, game: Arc<RwLock<Game>>);
+    async fn update(&mut self, game: Arc<RwLock<Game>>);
     fn new() -> Self;
 }
 
 #[derive(Clone)]
 pub struct LobbyState;
+#[async_trait::async_trait]
 impl State for LobbyState {
-    fn init(&mut self, game: Arc<RwLock<Game>>) {
-        println!("init Lobby state");
+    async fn init(&mut self, game: Arc<RwLock<Game>>) {
+        let state = serde_json::to_string(&json!({
+            "op": "state",
+            "state": "Lobby",
+        }))
+        .unwrap();
+
+        if let Err(e) = game
+            .write()
+            .await
+            .broadcast(Message::Text(state))
+            .await {
+            tracing::error!("Failed to update the state. {}", e);
+        }
+        println!("Init Lobby state");
+        // Initialize the hider seeker lists
     }
 
-    fn update(&mut self, game: Arc<RwLock<Game>>) {
+    async fn update(&mut self, game: Arc<RwLock<Game>>) {
         println!("Lobby state");
+        // account for new teams?
     }
 
     fn new() -> Self {
@@ -48,13 +67,34 @@ impl State for LobbyState {
 
 #[derive(Clone)]
 pub struct HideState;
+#[async_trait::async_trait]
 impl State for HideState {
-    fn init(&mut self, game: Arc<RwLock<Game>>) {
-        println!("init Hide state");
+    async fn init(&mut self, game: Arc<RwLock<Game>>) {
+        let state = serde_json::to_string(&json!({
+            "op": "state",
+            "state": "Hide",
+        }))
+        .unwrap();
+
+        if let Err(e) = game
+            .write()
+            .await
+            .broadcast(Message::Text(state))
+            .await {
+            tracing::error!("Failed to update the state. {}", e);
+        }
+        println!("Init hide state");
+
+        // pick hiders
+        // Request for hiders base
+        // START TIMER TO CHANGE
     }
-    fn update(&mut self, game: Arc<RwLock<Game>>) {
+
+    async fn update(&mut self, game: Arc<RwLock<Game>>) {
         println!("Hide state");
+        // CHECK TIMER FOR CHANGEOVER
     }
+
     fn new() -> Self {
         HideState
     }
@@ -62,13 +102,34 @@ impl State for HideState {
 
 #[derive(Clone)]
 pub struct SeekState;
+#[async_trait::async_trait]
 impl State for SeekState {
-    fn init(&mut self, game: Arc<RwLock<Game>>) {
-        println!("Seek state");
+    async fn init(&mut self, game: Arc<RwLock<Game>>) {
+        let state = serde_json::to_string(&json!({
+            "op": "state",
+            "state": "Seek",
+        }))
+        .unwrap();
+
+        if let Err(e) = game
+            .write()
+            .await
+            .broadcast(Message::Text(state))
+            .await {
+            tracing::error!("Failed to update the state. {}", e);
+        }
+        println!("Init Seek state");
+
+        // START TIMER
     }
-    fn update(&mut self, game: Arc<RwLock<Game>>) {
+
+    async fn update(&mut self, game: Arc<RwLock<Game>>) {
         println!("Seek state");
+        // CHECK END OF TIMER
+        // CHECK IF SEEKER HAS FOUND HIDER
+        //
     }
+
     fn new() -> Self {
         SeekState
     }
@@ -76,13 +137,29 @@ impl State for SeekState {
 
 #[derive(Clone)]
 pub struct RoundEndState;
+#[async_trait::async_trait]
 impl State for RoundEndState {
-    fn init(&mut self, game: Arc<RwLock<Game>>) {
+    async fn init(&mut self, game: Arc<RwLock<Game>>) {
+        let state = serde_json::to_string(&json!({
+            "op": "state",
+            "state": "RoundEnd",
+        }))
+        .unwrap();
+
+        if let Err(e) = game
+            .write()
+            .await
+            .broadcast(Message::Text(state))
+            .await {
+            tracing::error!("Failed to update the state. {}", e);
+        }
+        println!("Init RoundEnd state");
+    }
+
+    async fn update(&mut self, game: Arc<RwLock<Game>>) {
         println!("RoundEnd state");
     }
-    fn update(&mut self, game: Arc<RwLock<Game>>) {
-        println!("RoundEnd state");
-    }
+
     fn new() -> Self {
         RoundEndState
     }
