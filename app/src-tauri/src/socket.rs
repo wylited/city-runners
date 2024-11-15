@@ -110,7 +110,8 @@ async fn handle_json_message(text: String, app: AppHandle) {
             if let Some(op) = json.get("op").and_then(Value::as_str) {
                 match op {
                     "notif" => handle_notif(json, app).await,
-                    "state" => handle_state(json, app).await,
+                    "state" => handle_state(json, app).await.expect("STATE ERROR"),
+                    "chat" => handle_chat(json, app).await.expect("CHAT ERROR"),
                     "location" => handle_location(json).await,
                     _ => println!("Unknown operation: {}", op),
                 }
@@ -137,32 +138,87 @@ async fn handle_notif(json: Value, app: AppHandle) {
     }
 }
 
-async fn handle_state(json: Value, app: AppHandle) {
+async fn handle_chat(json: Value, app: AppHandle) -> Result<(), String> {
+    if let Some(msg) = json.get("msg") {
+        let stores = app.app_handle().try_state::<StoreCollection<Wry>>().ok_or("store not found")?;
+        let path = PathBuf::from("store.bin");
+
+        with_store(app.clone(), stores, path, |store| {
+            // Get current messages or create empty vector if none exist
+            let mut msgs: Vec<String> = store
+                .get("msgs")
+                .and_then(|v| v.as_array().cloned())
+                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+                .unwrap();
+
+            // Append new message
+            if let Some(new_msg) = msg.as_str() {
+                msgs.push(new_msg.to_string());
+            }
+
+            // Save updated messages back to store
+            store.insert("msgs".to_string(), json!(msgs))
+        });
+    }
+    Ok(())
+}
+async fn handle_state(json: Value, app: AppHandle) -> Result<(), String> {
     if let Some(state) = json.get("state") {
-        let store = match app.get_store("store.bin") {
-            Some(s) => s,
+        let stores = app.app_handle().try_state::<StoreCollection<Wry>>().ok_or("store not found")?;
+        let path = PathBuf::from("store.bin");
+        let mut page_update: Option<String> = None;
+
+        with_store(app.clone(), stores, path, |store| {
+           store.insert("state".to_string(), state.clone())
+        });
+
+        return match state.as_str() {
+            Some("Lobby") => {
+                        app.notification()
+            .builder()
+            .title("Round Started")
+            .body("Ready up your team!")
+            .show()
+            .unwrap();
+                Ok(())
+            },
+            Some("Hide") => {
+                                        app.notification()
+            .builder()
+            .title("Game Started")
+            .body("Go HIDE!")
+            .show()
+            .unwrap();
+
+                Ok(())
+            },
+            Some("Seek") => {
+                                                        app.notification()
+            .builder()
+            .title("Hiding time over")
+            .body("Seekers go seek!")
+            .show()
+            .unwrap();
+
+                Ok(())
+            },
+            Some("RoundEnd") => {
+            Ok(())
+            },
+            Some(unknown_state) => {
+                println!("unknown state {}", unknown_state);
+                Err(format!("unknown state {}", unknown_state))
+            },
             None => {
-                println!("Store missing");
-                return;
+                println!("state value is not a string");
+                Err("State value is not a string".to_string())
             }
         };
 
-        store.set("state", state)?; // Need to handle the Result
-
-        match state.as_str() {
-            Some("Lobby") => {},
-            Some("Hide") => {},
-            Some("Seek") => {},
-            Some("RoundEnd") => {},
-            Some(unknown_state) => {
-                println!("unknown state {}", unknown_state)
-            },
-            None => {
-                println!("state value is not a string")
-            }
-        }
+        Ok(())
     } else {
         println!("Missing 'state' key in update");
+        return Err("Missing 'state' key in update".to_string());
     }
 }
 

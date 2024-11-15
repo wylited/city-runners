@@ -187,8 +187,7 @@ async fn handle_chat_op(json: &serde_json::Value, who: &str, game: &Arc<RwLock<G
 pub async fn chat(who: String, game: Arc<RwLock<Game>>, msg: String) {
     let msg = serde_json::to_string(&serde_json::json!({
         "op": "chat",
-        "msg": msg,
-        "who": who
+        "msg": format!("{}: {}", who, msg),
     }))
     .unwrap();
     if let Err(e) = game.write().await.broadcast(Message::Text(msg)).await {

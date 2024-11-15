@@ -33,7 +33,7 @@ pub fn run() {
             teams::new,
             teams::get,
             game::start,
-            socket::connect,
+            socket::connect
         ]);
 
     //#[cfg(debug_assertions)]
